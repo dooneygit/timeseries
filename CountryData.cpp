@@ -189,6 +189,14 @@ void CountryData::ts(std::string series_code) {
     std::cout << "failure" << std::endl;
 }
 
+void CountryData::getCountryName() {
+    return countryName;
+}
+
+void CountryData::getCountryCode() {
+    return countryCode;
+}
+
 
 
 

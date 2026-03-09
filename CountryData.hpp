@@ -23,5 +23,7 @@ public:
     void deleteSeries(std::string series_code);
     void biggest();
     void ts(std::string series_code);
+    std::string getCountryName();
+    std::string getCountryCode();
 
 };
