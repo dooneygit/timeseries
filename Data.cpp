@@ -84,7 +84,7 @@ void data::range(std::string series_code) {
             maxMean = mean;
         }
 
-        if(mean < minMean) {
+        if(minMean > mean) {
             minMean = mean;
         }
         else if (mean > maxMean) {
@@ -95,3 +95,47 @@ void data::range(std::string series_code) {
     std::cout << minMean << " " << maxMean << std::endl;
 }
 
+void Data::build(std::string series_code) {
+    clearTree(root);
+    root = nullptr;
+
+    std::string validCountries[512];
+    int numOfValidCountries = 0;
+    double minMean = -1.0;
+    double maxMean = -1.0;
+    
+    for(int i{0}; i < numOfCountries; i++) {
+        int seriesIndex = countries[i].findSeriesCode(seriesCode);
+        double mean = countries[i].series[seriesIndex]->meanValue();
+
+        if(mean <= 0) {
+            continue;
+        }
+
+        validCountries[numOfValidCountries] = countries[i].getCountryName();
+        validCount++;
+
+        if(minMean == -1.0) {
+            minMean = mean;
+            maxMean = mean;
+        }
+
+        if(minMean > mean) {
+            minMean = mean;
+        }
+        else if(maxMean < mean) {
+            maxMean = mean;
+        }
+    }
+
+    root = recursiveBuild(validCountries, minMean, maxMean, numOfValidCountries, seriesIndex);
+    std::cout << "success" << std::endl
+}
+
+TreeNode* Data::recursiveBuild(std::string validCountries[], double minMean, double maxMean, int numOfValidCountries, int seriesIndex) {
+    TreeNode* node = new TreeNode(minMean, maxMean);
+
+    for(int i{0}; i < numOfValidCountries) {
+        node->
+    }
+}
