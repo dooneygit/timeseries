@@ -197,6 +197,29 @@ void CountryData::getCountryCode() {
     return countryCode;
 }
 
+void CountryData::smallest() {
+    int smallestIndex = -1;
+    double smallestMean = 0.0;
+
+    for(int i{0}; i < numOfElements; i++) {
+        if(series[i]->getSize() == 0) { 
+            continue;
+        }
+
+        double mean = series[i]->meanValue();
+        if(smallestIndex == -1 || mean < smallestMean) {
+            smallestIndex = i;
+            smallestMean = mean;
+        }
+    }
+
+    if(smallestIndex == -1) {
+        std::cout << "failure" << std::endl;
+        return;
+    }
+
+    std::cout << series[smallestIndex]->getSeriesCode() << std::endl;
+}
 
 
 

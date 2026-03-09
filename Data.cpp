@@ -56,3 +56,14 @@ void Data::list(const std::string country_name) {
     }
 }
 
+void data::country_min() {
+    for(int i{0}; i < numOfCountries; i++) {
+        if(countries[i].getCountryCode() == countryCode) {
+            countries[i].smallest();
+            return;
+        }
+    }
+
+    std::cout << "faiure" << std::endl;
+}
+
