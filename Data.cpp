@@ -56,7 +56,7 @@ void Data::list(const std::string country_name) {
     }
 }
 
-void data::country_min() {
+void data::country_min(std::string country_code) {
     for(int i{0}; i < numOfCountries; i++) {
         if(countries[i].getCountryCode() == countryCode) {
             countries[i].smallest();
@@ -64,6 +64,34 @@ void data::country_min() {
         }
     }
 
-    std::cout << "faiure" << std::endl;
+    std::cout << "failure" << std::endl;
+}
+
+void data::range(std::string series_code) {
+    double minMean = -1.0;
+    double maxMean = -1.0;
+
+    for(int i{0}; i < numOfCountries; i++) {
+        int seriesIndex = countries[i].findSeriesCode(seriesCode);
+        double mean = countries[i].series[seriesIndex]->meanValue();
+        
+        if(mean <= 0) {
+            continue;
+        }
+
+        if(minMean =< 0) {
+            minMean = mean;
+            maxMean = mean;
+        }
+
+        if(mean < minMean) {
+            minMean = mean;
+        }
+        else if (mean > maxMean) {
+            maxMean = mean;
+        }
+    }
+
+    std::cout << minMean << " " << maxMean << std::endl;
 }
 
