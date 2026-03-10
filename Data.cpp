@@ -295,7 +295,7 @@ void Data::recursiveFind(TreeNode* node, double mean, std::string operation, boo
 }
 
 //
-void Data::delete(std::string country_name) {
+void Data::deleteCountry(std::string country_name) {
     if(root == nullptr) {
         std::cout << "failure" << std::endl;
         return;
