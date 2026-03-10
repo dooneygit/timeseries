@@ -132,10 +132,88 @@ void Data::build(std::string series_code) {
     std::cout << "success" << std::endl
 }
 
-TreeNode* Data::recursiveBuild(std::string validCountries[], double minMean, double maxMean, int numOfValidCountries, int seriesIndex) {
+TreeNode* Data::recursiveBuild(std::string validCountries[], double minMean, double maxMean, int numOfValidCountries, std::string series_code) {
     TreeNode* node = new TreeNode(minMean, maxMean);
 
-    for(int i{0}; i < numOfValidCountries) {
-        node->
+    for(int i{0}; i < numOfValidCountries;i++) {
+        if(node->numOfCountries == node->capacity) {
+            node->resize(node->capacity * 2);
+        }
+
+        node->countries[node->numOfCountries] = validCountries[i];
+        node->numOfCountries++;
     }
+
+    if(numOfElements == 1) {
+        return node;
+    }
+
+    double firstMean = -1.0;
+    bool close = true;
+
+    for(int i{0}; i < count; i++) {
+        double mean = -1.0;
+
+        for(int j{0}; j < numOfCountries; j++) {
+            if(countries[j].getCountryName() == countries[i]) {
+                int seriesIndex = countries[j].findSeriesCode(series_code);
+                double mean = countries[j].series[seriesIndex]->meanValue();
+
+                break;
+            }
+        }
+
+        if(i == 0) {
+            firstMean = mean
+        }
+        else{
+            double difference = mean - firstMean;
+            if(difference < 0) {
+                diff = -diff;
+            }
+            if(diff > 1e-3) {
+                close = false;
+                break;
+            }
+        }
+    }
+
+    if(close) {
+        return node;
+    }
+
+    double mid = (left + right)/2.0;
+    std::string leftCountries[512];
+    std::string rightCountries[512];
+    int numOfLeft = 0;
+    int numOfRight = 0;
+
+    for(int i{0}; i < numOfValidCountries; i++) {
+        double mean = -1.0;
+
+        for(int j{0}; j < numOfCountries; j++) {
+            if(countries[j].getCountryName() == validCountries[i]) {
+                int seriesIndex = countries[j].findSeriesCode(series_code);
+                double mean = countries[j].series[seriesIndex]->meanValue();
+                break;
+            }
+        }
+
+        if(mean < mid) {
+            leftCountries[numOfLeft] = validCountries[i];
+            numOfLeft;
+        }
+        else {
+            rightCountries[numOfRight] = validCountries[i];
+            numOfRight++;
+        }
+    }
+
+    if(numOfLeft == 0 || numOfRight == 0) {
+        return node;
+    }
+
+    node->left = recursiveBuild(series_code, left, leftCountries, numOfLeft, mid);
+    node->left = recursiveBuild(series_code, right, rightCountries, numOfRight, mid);
+    return node;
 }
