@@ -25,5 +25,5 @@ public:
     void ts(std::string series_code);
     std::string getCountryName();
     std::string getCountryCode();
-
+    void smallest();
 };

@@ -294,4 +294,144 @@ void Data::recursiveFind(TreeNode* node, double mean, std::string operation, boo
     recursiveFind(node->right, mean, operation, first);
 }
 
+//
+void Data::delete(std::string country_name) {
+    if(root == nullptr) {
+        std::cout << "failure" << std::endl;
+        return;
+    }
 
+    bool found = recursiveDelete(root, country_name);
+
+    if(root != nullptr && root->left == nullptr && root->right == nullptr && root->numOfCountries == 0) {
+        delete root;
+        root = nullptr;
+    }
+
+    if(found) {
+        std::cout << "success" << std::endl;
+    }
+    else {
+        std::cout << "failure" << std::endl;
+    }
+}
+
+bool Data::recursiveDelete(TreeNode* node, std::string country_name) {
+    if(node == nullptr) {
+        return false;
+    }
+
+    bool foundHere = false;
+
+    for(int i = 0; i < node->numOfCountries; i++) {
+        if(node->countries[i] == country_name) {
+            foundHere = true;
+
+            for(int j = i; j < node->numOfCountries - 1; j++) {
+                node->countries[j] = node->countries[j + 1];
+            }
+
+            node->numOfCountries--;
+            break;
+        }
+    }
+
+    if(!foundHere) {
+        return false;
+    }
+
+    recursiveDelete(node->left, country_name);
+    recursiveDelete(node->right, country_name);
+
+    if(node->left != nullptr) {
+        if(node->left->left == nullptr && node->left->right == nullptr && node->left->numOfCountries == 0) {
+            delete node->left;
+            node->left = nullptr;
+        }
+    }
+
+    if(node->right != nullptr) {
+        if(node->right->left == nullptr && node->right->right == nullptr && node->right->numOfCountries == 0) {
+            delete node->right;
+            node->right = nullptr;
+        }
+    }
+
+    return true;
+}
+
+void Data::limits(std::string condition) {
+    if(root == nullptr) {
+        std::cout << "failure" << std::endl;
+        return;
+    }
+
+    TreeNode* temp = root;
+
+    if(condition == "lowest") {
+        while(temp->left != nullptr) {
+            temp = temp->left;
+        }
+    }
+    else {
+        while(temp->right != nullptr) {
+            temp = temp->right;
+        }
+    }
+
+    for(int i = 0; i < temp->numOfCountries; i++) {
+        std::cout << temp->countries[i];
+
+        if(i != temp->numOfCountries - 1) {
+            std::cout << " ";
+        }
+    }
+
+    std::cout << std::endl;
+}
+
+void Data::trace(std::string country_name) {
+    if(root == nullptr) {
+        std::cout << "failure" << std::endl;
+        return;
+    }
+
+    if(!hasCountry(root, country_name)) {
+        std::cout << "failure" << std::endl;
+        return;
+    }
+
+    recursiveTrace(root, country_name);
+    std::cout << std::endl;
+}
+
+void Data::recursiveTrace(TreeNode* node, std::string country_name) {
+    if(node == nullptr) {
+        return;
+    }
+
+    std::cout << node->min << " " << node->max;
+
+    if(node->left != nullptr && hasCountry(node->left, country_name)) {
+        std::cout << " ";
+        recursiveTrace(node->left, country_name);
+    }
+    else if(node->right != nullptr && hasCountry(node->right, country_name)) {
+        std::cout << " ";
+        recursiveTrace(node->right, country_name);
+    }
+}
+
+bool Data::hasCountry(TreeNode* node, std::string country_name) {
+    if(node == nullptr) {
+        return false;
+    }
+
+    for(int i = 0; i < node->numOfCountries; i++) {
+        if(node->countries[i] == country_name) {
+            return true;
+        }
+    }
+
+    return false;
+}
