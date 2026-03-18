@@ -6,6 +6,69 @@
 #include "TimeSeries.hpp"
 #include "CountryData.hpp"
 
+Data::Data() : numOfCountries(0), root(nullptr), currSeriesCode("") {}
+
+Data::~Data() {
+    clearTree(root);
+    root = nullptr;
+}
+
+//hashing
+int Data::codeToInt(std::string country_code) {
+    int result = 0;
+
+    for(int i{0}; i < 3; i++) {
+        result = result * 26 + (code[i] - 'A');
+    }
+
+    return result;
+}
+
+int Data::primaryHash(std::string key) {
+    return key % 512;
+}
+
+int Data::secondaryHash(std::string key) {
+    return 1 + (key % 511);
+}
+
+int Data::hash(int key, int i) {
+    return (primaryHash(key) + i * secondaryHash(key)) % 512;
+}
+
+int Data::search(std::string country_code, bool forInsertion) {
+    int key = codeToInt(code);
+    int firstDeleted = -1;
+    bool reoccupy = false;
+
+    for(int i{0}; i < 512; i++) {
+        int index = hash(key, i);
+        reoccupy = forInsertion && firstDeleted != -1;
+
+        if(searchState[index] == -1 && firstDeleted == -1) {
+            firstDeleted = index;
+        }
+        else if(searchState[index] == 1) {
+            if(countries[index].getCountryCode() == country_code) {
+                return index;
+            }
+        }
+        else if(searchState[index] == 0) {
+            if(reoccupy) {
+                return firstDeleted;
+            }
+            return index;
+        }
+    }
+
+    if(reoccupy) {
+        return firstDeleted;
+    }
+
+    return -1;
+}
+
+//functions
 void Data::load() {
     for(int i{0}; i < numOfCountries; i++) {
         countries[i].clear(); //clear old country data
@@ -450,9 +513,4 @@ void Data::clearTree(TreeNode* node) {
     clearTree(node->left);
     clearTree(node->right);
     delete node;
-}
-
-Data::~Data() {
-    clearTree(root);
-    root = nullptr;
 }

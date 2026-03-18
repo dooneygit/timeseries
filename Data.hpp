@@ -16,6 +16,12 @@ private:
     void recursiveTrace(TreeNode* node, std::string country_name);
     bool hasCountry(TreeNode* node, std::string country_name);
     void clearTree(TreeNode* node);
+    int codeToInt();
+    int searchState[512]; // occupied = 1, empty = 0, previous occupied = -1
+    int primaryHash(std::string key);
+    int secondaryHash(std::string key);
+    int hash(int key, int i);
+    int search(std::string code, bool forInsertion);
 public:
     ~Data();
     void load();
