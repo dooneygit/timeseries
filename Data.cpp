@@ -451,3 +451,8 @@ void Data::clearTree(TreeNode* node) {
     clearTree(node->right);
     delete node;
 }
+
+Data::~Data() {
+    clearTree(root);
+    root = nullptr;
+}

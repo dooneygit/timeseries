@@ -17,6 +17,7 @@ private:
     bool hasCountry(TreeNode* node, std::string country_name);
     void clearTree(TreeNode* node);
 public:
+    ~Data();
     void load();
     void list(const std::string country_name);
     void country_min(std::string country_code);
