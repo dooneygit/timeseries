@@ -18,17 +18,17 @@ int Data::codeToInt(std::string country_code) {
     int result = 0;
 
     for(int i{0}; i < 3; i++) {
-        result = result * 26 + (code[i] - 'A');
+        result = result * 26 + (country_code[i] - 'A');
     }
 
     return result;
 }
 
-int Data::primaryHash(std::string key) {
+int Data::primaryHash(int key) {
     return key % 512;
 }
 
-int Data::secondaryHash(std::string key) {
+int Data::secondaryHash(int key) {
     return 1 + (key % 511);
 }
 
@@ -40,33 +40,34 @@ int Data::search(std::string country_code, bool forInsertion, bool shouldPrint) 
     int key = codeToInt(country_code);
     int firstDeleted = -1;
     bool reoccupy = false;
+    int i = 0;
 
 
-    for(int i{0}; i < 512; i++) {
+    for( ; i < 512; i++) {
         int index = hash(key, i);
         reoccupy = forInsertion && firstDeleted != -1;
 
-        if(searchState[index] == -1 && firstDeleted == -1) {
+        if(state[index] == -1 && firstDeleted == -1) {
             firstDeleted = index;
         }
-        else if(searchState[index] == 1) {
+        else if(state[index] == 1) {
             if(countries[index].getCountryCode() == country_code) {
                 if(shouldPrint) {
-                    std::cout << "index" << index << "searches" << i - 1 << std::endl;
+                    std::cout << "index " << index << "searches " << i + 1 << std::endl;
                 }
                 return index;
             }
         }
-        else if(searchState[index] == 0) {
+        else if(state[index] == 0) {
             if(reoccupy) {
                 if(shouldPrint) {
-                    std::cout << "index" << firstDeleted << "searches" << i - 1 << std::endl;
+                    std::cout << "index " << firstDeleted << "searches " << i + 1 << std::endl;
                 }
                 return firstDeleted;
             }
 
             if(shouldPrint) {
-                std::cout << "index" << index << "searches" << i - 1 << std::endl;
+                std::cout << "index " << index << "searches " << i + 1 << std::endl;
             }
             return index;
         }
@@ -74,7 +75,7 @@ int Data::search(std::string country_code, bool forInsertion, bool shouldPrint) 
 
     if(reoccupy) {
         if(shouldPrint) {
-            std::cout << "index" << firstDeleted << "searches" << i - 1 << std::endl;
+            std::cout << "index " << firstDeleted << "searches " << i + 1 << std::endl;
         }
         return firstDeleted;
     }
@@ -88,24 +89,24 @@ void Data::load() {
     clearTree(root);
     root = nullptr;
     currSeriesCode = "";
-    
-    for(int i{0}; i < numOfCountries; i++) {
-        countries[i].clear(); //clear old country data
-        searchState[i] = 0;
+
+    for(int i{0}; i < 512; i++) {
+        countries[i].clear();
+        state[i] = 0;
     }
     numOfCountries = 0;
 
     std::ifstream inputFile("lab2_multidata.csv");
     std::string line;
 
-    std::getline(inputFile, line); //skip header
+    std::getline(inputFile, line); // skip header
 
-    while(std::getline(inputFile, line)) { //keep reading each row
-        std::stringstream ss(line);//extract comma separated fields
+    while(std::getline(inputFile, line)) {
+        std::stringstream ss(line);
         std::string name, code;
 
-        std::getline(ss, name, ','); 
-        std::getline(ss, code, ','); //country name and country code
+        std::getline(ss, name, ',');
+        std::getline(ss, code, ',');
 
         int countryIndex = search(code, true);
 
@@ -113,18 +114,11 @@ void Data::load() {
             continue;
         }
 
-        for(int i{0}; i < numOfCountries; i++) { //search if country was already added
-            if(countries[i].getCountryName() == name && countries[i].getCountryCode() == code) {
-                countryIndex = i;
-                break;
-            }
-        }
-
-        if(searchState[countryIndex] != -1) {
+        if(state[countryIndex] != 1) {
             countries[countryIndex].clear();
             countries[countryIndex].setCountryName(name);
             countries[countryIndex].setCountryCode(code);
-            searchState[countryIndex] = 1;
+            state[countryIndex] = 1;
             numOfCountries++;
         }
 
@@ -136,7 +130,7 @@ void Data::load() {
 
 void Data::list(const std::string country_name) { 
     for(int i{0}; i < 512; i++) { //go through all possible hash table slots
-        if(searchState[i] == 1 && countries[i].getCountryName() == country_name) { //if target country is found, print all series
+        if(state[i] == 1 && countries[i].getCountryName() == country_name) { //if target country is found, print all series
             countries[i].list();
             return;
         }
@@ -145,7 +139,7 @@ void Data::list(const std::string country_name) {
 
 void Data::country_min(std::string country_code) { //search for the country
     int countryIndex = search(country_code, false);
-    if(countryIndex == -1) {
+    if(countryIndex == -1 || state[countryIndex] != 1) {
         std::cout << "failure" << std::endl;
         return;
     }
@@ -158,7 +152,7 @@ void Data::range(std::string series_code) {
     double maxMean = -1.0;
 
     for(int i{0}; i < 512; i++) { //check series for every occupied country slot
-        if(searchState[i] != 1) {
+        if(state[i] != 1) {
             continue;
         }
 
@@ -197,7 +191,7 @@ void Data::build(std::string series_code) {
     double maxMean = -1.0;
     
     for(int i{0}; i < 512; i++) { 
-        if(searchState[i] != 1) {
+        if(state[i] != 1) {
             continue;
         }
 
@@ -254,7 +248,7 @@ TreeNode* Data::recursiveBuild(std::string validCountries[], double minMean, dou
         double mean = -1.0;
 
         for(int j{0}; j < 512; j++) { //find countrys mean from the main array
-            if(searchState[j] == 1 && countries[j].getCountryName() == validCountries[i]) {
+            if(state[j] == 1 && countries[j].getCountryName() == validCountries[i]) {
                 int seriesIndex = countries[j].findSeriesCode(series_code);
                 mean = countries[j].series[seriesIndex]->meanValue();
 
@@ -291,7 +285,7 @@ TreeNode* Data::recursiveBuild(std::string validCountries[], double minMean, dou
         double mean = -1.0;
 
         for(int j{0}; j < 512; j++) {
-            if(searchState[j] == 1 && countries[j].getCountryName() == validCountries[i]) {
+            if(state[j] == 1 && countries[j].getCountryName() == validCountries[i]) {
                 int seriesIndex = countries[j].findSeriesCode(series_code);
                 mean = countries[j].series[seriesIndex]->meanValue();
 
@@ -353,7 +347,7 @@ void Data::recursiveFind(TreeNode* node, double mean, std::string operation, boo
             double currMean = -1.0; //mean of leaf country
 
             for(int j{0}; j < 512; j++) {
-                if(searchState[j] == 1 && countries[j].getCountryName() == node->countries[i]) {
+                if(state[j] == 1 && countries[j].getCountryName() == node->countries[i]) {
                     int seriesIndex = countries[j].findSeriesCode(currSeriesCode);
                     currMean = countries[j].series[seriesIndex]->meanValue();
                     break;
@@ -405,7 +399,7 @@ void Data::deleteCountry(std::string country_name) {
 
     int index = -1;
     for(int i{0}; i < 512; i++) {
-        if(searchState[i] == 1 && countries[i].getCountryName() == country_name) {
+        if(state[i] == 1 && countries[i].getCountryName() == country_name) {
             index = i;
             break;
         }
@@ -421,7 +415,7 @@ void Data::deleteCountry(std::string country_name) {
     if(found) {
         if(index != -1) {
             countries[index].clear();
-            searchState[index] = -1;
+            state[index] = -1;
             numOfCountries--;
         }
         std::cout << "success" << std::endl;
@@ -562,7 +556,37 @@ void Data::clearTree(TreeNode* node) {
     delete node;
 }
 
-void lookup(std::string country_code) {
+void Data::lookup(std::string country_code) {
     search(country_code, false, true);
 }
 
+void Data::remove(std::string country_code) {
+    int countryIndex = search(country_code, false, false);
+
+    if(countryIndex != -1 && state[countryIndex] == 1) {
+        std::string country_name = countries[countryIndex].getCountryName();
+
+        countries[countryIndex].clear();
+        state[countryIndex] = -1;
+        numOfCountries--;
+    
+        if(root != nullptr) {
+            bool found = recursiveDelete(root, country_name);
+    
+            if(root != nullptr && root->left == nullptr &&
+               root->right == nullptr && root->numOfCountries == 0) {
+                delete root;
+                root = nullptr;
+            }
+        }
+    
+        std::cout << "success" << std::endl;
+    }
+    else {
+        std::cout << "failure" << std::endl;
+    }
+}
+
+void Data::insert(country_code) {
+    
+}

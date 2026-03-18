@@ -17,9 +17,9 @@ private:
     bool hasCountry(TreeNode* node, std::string country_name);
     void clearTree(TreeNode* node);
     int codeToInt();
-    int searchState[512]; // occupied = 1, empty = 0, previous occupied = -1
-    int primaryHash(std::string key);
-    int secondaryHash(std::string key);
+    int state[512]; // occupied = 1, empty = 0, previous occupied = -1
+    int primaryHash(int key);
+    int secondaryHash(int key);
     int hash(int key, int i);
     int search(std::string code, bool forInsertion);
 public:
@@ -33,4 +33,6 @@ public:
     void deleteCountry(std::string country_name);
     void limits(std::string condition);
     void trace(std::string country_name);
+    void lookup(std::string country_code);
+
 };
