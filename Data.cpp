@@ -36,10 +36,11 @@ int Data::hash(int key, int i) {
     return (primaryHash(key) + i * secondaryHash(key)) % 512;
 }
 
-int Data::search(std::string country_code, bool forInsertion) {
+int Data::search(std::string country_code, bool forInsertion, bool shouldPrint) {
     int key = codeToInt(country_code);
     int firstDeleted = -1;
     bool reoccupy = false;
+
 
     for(int i{0}; i < 512; i++) {
         int index = hash(key, i);
@@ -50,21 +51,35 @@ int Data::search(std::string country_code, bool forInsertion) {
         }
         else if(searchState[index] == 1) {
             if(countries[index].getCountryCode() == country_code) {
+                if(shouldPrint) {
+                    std::cout << "index" << index << "searches" << i - 1 << std::endl;
+                }
                 return index;
             }
         }
         else if(searchState[index] == 0) {
             if(reoccupy) {
+                if(shouldPrint) {
+                    std::cout << "index" << firstDeleted << "searches" << i - 1 << std::endl;
+                }
                 return firstDeleted;
+            }
+
+            if(shouldPrint) {
+                std::cout << "index" << index << "searches" << i - 1 << std::endl;
             }
             return index;
         }
     }
 
     if(reoccupy) {
+        if(shouldPrint) {
+            std::cout << "index" << firstDeleted << "searches" << i - 1 << std::endl;
+        }
         return firstDeleted;
     }
 
+    std::cout << "failure" << std::endl;
     return -1;
 }
 
@@ -546,3 +561,8 @@ void Data::clearTree(TreeNode* node) {
     clearTree(node->right);
     delete node;
 }
+
+void lookup(std::string country_code) {
+    search(country_code, false, true);
+}
+
