@@ -37,7 +37,7 @@ int Data::hash(int key, int i) {
 }
 
 int Data::search(std::string country_code, bool forInsertion) {
-    int key = codeToInt(code);
+    int key = codeToInt(country_code);
     int firstDeleted = -1;
     bool reoccupy = false;
 
@@ -70,8 +70,13 @@ int Data::search(std::string country_code, bool forInsertion) {
 
 //functions
 void Data::load() {
+    clearTree(root);
+    root = nullptr;
+    currSeriesCode = "";
+    
     for(int i{0}; i < numOfCountries; i++) {
         countries[i].clear(); //clear old country data
+        searchState[i] = 0;
     }
     numOfCountries = 0;
 
@@ -87,7 +92,11 @@ void Data::load() {
         std::getline(ss, name, ','); 
         std::getline(ss, code, ','); //country name and country code
 
-        int countryIndex = -1;
+        int countryIndex = search(code, true);
+
+        if(countryIndex == -1) {
+            continue;
+        }
 
         for(int i{0}; i < numOfCountries; i++) { //search if country was already added
             if(countries[i].getCountryName() == name && countries[i].getCountryCode() == code) {
@@ -96,11 +105,11 @@ void Data::load() {
             }
         }
 
-        if(countryIndex == -1) { //if not found, make a new country entry
-            countryIndex = numOfCountries;
+        if(searchState[countryIndex] != -1) {
             countries[countryIndex].clear();
             countries[countryIndex].setCountryName(name);
             countries[countryIndex].setCountryCode(code);
+            searchState[countryIndex] = 1;
             numOfCountries++;
         }
 
