@@ -120,8 +120,8 @@ void Data::load() {
 }
 
 void Data::list(const std::string country_name) { 
-    for(int i{0}; i < numOfCountries; i++) { //go through all countries
-        if(countries[i].getCountryName() == country_name) { //if target country is found, print all series
+    for(int i{0}; i < 512; i++) { //go through all possible hash table slots
+        if(searchState[i] == 1 && countries[i].getCountryName() == country_name) { //if target country is found, print all series
             countries[i].list();
             return;
         }
@@ -129,22 +129,26 @@ void Data::list(const std::string country_name) {
 }
 
 void Data::country_min(std::string country_code) { //search for the country
-    for(int i{0}; i < numOfCountries; i++) {
-        if(countries[i].getCountryCode() == country_code) {
-            countries[i].smallest(); //print the series code with the smallest mean
-            return;
-        }
+    int countryIndex = search(country_code, false);
+    if(countryIndex == -1) {
+        std::cout << "failure" << std::endl;
+        return;
     }
 
-    std::cout << "failure" << std::endl;
+    countries[countryIndex].smallest(); //print the series code with the smallest mean
 }
 
 void Data::range(std::string series_code) { 
     double minMean = -1.0; //tracks smallest and largest so far
     double maxMean = -1.0;
 
-    for(int i{0}; i < numOfCountries; i++) { //check series for every country
+    for(int i{0}; i < 512; i++) { //check series for every occupied country slot
+        if(searchState[i] != 1) {
+            continue;
+        }
+
         int seriesIndex = countries[i].findSeriesCode(series_code);
+
         double mean = countries[i].series[seriesIndex]->meanValue(); //compute mean of matching series
         
         if(mean <= 0) { //ignore invalid
@@ -177,8 +181,13 @@ void Data::build(std::string series_code) {
     double minMean = -1.0;
     double maxMean = -1.0;
     
-    for(int i{0}; i < numOfCountries; i++) { 
+    for(int i{0}; i < 512; i++) { 
+        if(searchState[i] != 1) {
+            continue;
+        }
+
         int seriesIndex = countries[i].findSeriesCode(series_code);
+
         double mean = countries[i].series[seriesIndex]->meanValue(); //calculate matching series mean
 
         if(mean <= 0) { //ignore invalid
@@ -229,8 +238,8 @@ TreeNode* Data::recursiveBuild(std::string validCountries[], double minMean, dou
     for(int i{0}; i < numOfValid; i++) {
         double mean = -1.0;
 
-        for(int j{0}; j < numOfCountries; j++) { //find countrys mean from the main array
-            if(countries[j].getCountryName() == validCountries[i]) {
+        for(int j{0}; j < 512; j++) { //find countrys mean from the main array
+            if(searchState[j] == 1 && countries[j].getCountryName() == validCountries[i]) {
                 int seriesIndex = countries[j].findSeriesCode(series_code);
                 mean = countries[j].series[seriesIndex]->meanValue();
 
@@ -266,10 +275,11 @@ TreeNode* Data::recursiveBuild(std::string validCountries[], double minMean, dou
     for(int i{0}; i < numOfValid; i++) { //divide countries based on their mean vs midpoint
         double mean = -1.0;
 
-        for(int j{0}; j < numOfCountries; j++) {
-            if(countries[j].getCountryName() == validCountries[i]) {
+        for(int j{0}; j < 512; j++) {
+            if(searchState[j] == 1 && countries[j].getCountryName() == validCountries[i]) {
                 int seriesIndex = countries[j].findSeriesCode(series_code);
                 mean = countries[j].series[seriesIndex]->meanValue();
+
                 break;
             }
         }
@@ -327,8 +337,8 @@ void Data::recursiveFind(TreeNode* node, double mean, std::string operation, boo
         for(int i{0}; i < node->numOfCountries; i++) {
             double currMean = -1.0; //mean of leaf country
 
-            for(int j{0}; j < numOfCountries; j++) {
-                if(countries[j].getCountryName() == node->countries[i]) {
+            for(int j{0}; j < 512; j++) {
+                if(searchState[j] == 1 && countries[j].getCountryName() == node->countries[i]) {
                     int seriesIndex = countries[j].findSeriesCode(currSeriesCode);
                     currMean = countries[j].series[seriesIndex]->meanValue();
                     break;
@@ -378,6 +388,14 @@ void Data::deleteCountry(std::string country_name) {
         return;
     }
 
+    int index = -1;
+    for(int i{0}; i < 512; i++) {
+        if(searchState[i] == 1 && countries[i].getCountryName() == country_name) {
+            index = i;
+            break;
+        }
+    }
+
     bool found = recursiveDelete(root, country_name);
 
     if(root != nullptr && root->left == nullptr && root->right == nullptr && root->numOfCountries == 0) { 
@@ -386,6 +404,11 @@ void Data::deleteCountry(std::string country_name) {
     }
 
     if(found) {
+        if(index != -1) {
+            countries[index].clear();
+            searchState[index] = -1;
+            numOfCountries--;
+        }
         std::cout << "success" << std::endl;
     }
     else {
