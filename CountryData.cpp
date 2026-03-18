@@ -7,26 +7,23 @@
 
 void CountryData::resize(int newCapacity) {
     if(newCapacity < 2) { 
-        newCapacity = 2; //the smallest that an array can be is 2 elements, regardless of what capacity is passed in
+        newCapacity = 2;
     }
 
-    //allocate new array for elements to be copied over 
     TimeSeries** newSeries = new TimeSeries*[newCapacity];
     
-    //move all elements from our old arrays to our new arrays
     for(int i{0}; i < numOfElements; i++) {
         newSeries[i] = series[i];
     }
 
-    //deallocate our old array since they are no longer used and set our pointers to the new array
     delete[] series;
     series = newSeries;
     capacity = newCapacity;
 }
 
 int CountryData::findSeriesCode(std::string series_code) {
-    for(int i{0}; i < numOfElements; i++) { //iterates through all series for the country
-        if(series[i]->getSeriesCode() == series_code) { //if the code of our current series matches, return the index
+    for(int i{0}; i < numOfElements; i++) {
+        if(series[i]->getSeriesCode() == series_code) {
             return i;
         }
     }
@@ -38,14 +35,43 @@ CountryData::CountryData(): numOfElements{0}, capacity{2}, series(new TimeSeries
 
 CountryData::~CountryData() {
     for(int i{0}; i < numOfElements; i++) {
-        delete series[i]; //delete all series 
+        delete series[i];
     }
     
     delete[] series;
 }
 
+void CountryData::clear() {
+    for(int i{0}; i < numOfElements; i++) {
+        delete series[i];
+    }
+
+    numOfElements = 0;
+    resize(2);
+    countryName = "";
+    countryCode = "";
+}
+
+void CountryData::setCountryName(std::string name) {
+    countryName = name;
+}
+
+void CountryData::setCountryCode(std::string code) {
+    countryCode = code;
+}
+
+void CountryData::addSeriesFromRow(std::string row) {
+    if(numOfElements == capacity) {
+        resize(capacity * 2);
+    }
+
+    series[numOfElements] = new TimeSeries();
+    series[numOfElements]->loadFromRow(row);
+    numOfElements++;
+}
+
 void CountryData::load(std::string country_name) {
-    for(int i{0}; i < numOfElements; i++) { //delete all series in case load is called again
+    for(int i{0}; i < numOfElements; i++) {
         delete series[i];
     }
     numOfElements = 0;
@@ -55,28 +81,28 @@ void CountryData::load(std::string country_name) {
     std::string line;
     bool isCountryFound = false;
 
-    while(std::getline(inputFile, line)) { //read one row at a time
+    while(std::getline(inputFile, line)) {
         std::stringstream ss(line);
         std::string name, code;
-        std::getline(ss, name, ','); //get country name
+        std::getline(ss, name, ',');
 
-        if(!isCountryFound) { //if we haven't gotten to the lines our country encompasses
-            if(name != country_name) { //continue until we have our target country
+        if(!isCountryFound) {
+            if(name != country_name) {
                 continue;
             }
 
-            isCountryFound =  true; //we are at the lines our country encompasses
+            isCountryFound =  true;
             countryName = name;
-            std::getline(ss, code, ','); //get country code
+            std::getline(ss, code, ',');
             countryCode = code;
         }
         else {
-            if(name != country_name) { //if we are finished with our country, break
+            if(name != country_name) {
                 break;
             }
         }
 
-        if (numOfElements == capacity) {
+        if(numOfElements == capacity) {
             resize(capacity * 2);
         }
         series[numOfElements] = new TimeSeries();
@@ -90,7 +116,7 @@ void CountryData::load(std::string country_name) {
 void CountryData::list() {
     std::cout << countryName << " " << countryCode;
 
-    for(int i{0}; i < numOfElements; i++){ //iterate through all series, get and print name
+    for(int i{0}; i < numOfElements; i++){
         std::cout << " " << series[i]->getSeriesName();
     }
 
@@ -100,7 +126,7 @@ void CountryData::list() {
 void CountryData::add(std::string series_code, int y, double d) {
     int seriesIndex = findSeriesCode(series_code);
 
-    if(seriesIndex != -1) { //if the series code exists
+    if(seriesIndex != -1) {
         series[seriesIndex]->add(y,d);
         return;
     }
@@ -111,7 +137,7 @@ void CountryData::add(std::string series_code, int y, double d) {
 void CountryData::update(std::string series_code, int y, double d) {
     int seriesIndex = findSeriesCode(series_code);
 
-    if(seriesIndex != -1) { //if the series code exists
+    if(seriesIndex != -1) {
         series[seriesIndex]->update(y,d);
         return;
     }
@@ -122,7 +148,7 @@ void CountryData::update(std::string series_code, int y, double d) {
 void CountryData::print(std::string series_code) {
     int seriesIndex = findSeriesCode(series_code);
 
-    if(seriesIndex != -1) { //if the series code exists
+    if(seriesIndex != -1) {
         series[seriesIndex]->print();
         return;
     }
@@ -134,9 +160,9 @@ void CountryData::deleteSeries(std::string series_code) {
     int seriesIndex = findSeriesCode(series_code);
 
     if(seriesIndex != -1) {
-        delete series[seriesIndex]; //delete series
+        delete series[seriesIndex];
 
-        for(int i = seriesIndex + 1; i < numOfElements; i++) { //shift all series left to fill empty space
+        for(int i = seriesIndex + 1; i < numOfElements; i++) {
             series[i - 1] = series[i];
         }
         numOfElements--;
@@ -157,18 +183,18 @@ void CountryData::biggest() {
     double biggestMean = 0.0;
 
     for(int i{0}; i < numOfElements; i++) {
-        if(series[i]->getSize() == 0) { //if the series has no valid data, skip
+        if(series[i]->getSize() == 0) {
             continue;
         }
-        double mean = series[i]->meanValue(); //calculate mean
-        if(biggestIndex == -1 || mean > biggestMean) { //if we have no biggest mean or if our mean is the biggest so far
-            biggestIndex = i; //set to current index
+        double mean = series[i]->meanValue();
+        if(biggestIndex == -1 || mean > biggestMean) {
+            biggestIndex = i;
             biggestMean = mean;
         }
     }
 
     if(biggestIndex == -1) {
-        std::cout << "failure" << std::endl; //if we never set a biggest mean, no series has valid data
+        std::cout << "failure" << std::endl;
         return;
     }
 
@@ -189,11 +215,11 @@ void CountryData::ts(std::string series_code) {
     std::cout << "failure" << std::endl;
 }
 
-void CountryData::getCountryName() {
+std::string CountryData::getCountryName() {
     return countryName;
 }
 
-void CountryData::getCountryCode() {
+std::string CountryData::getCountryCode() {
     return countryCode;
 }
 
@@ -220,8 +246,3 @@ void CountryData::smallest() {
 
     std::cout << series[smallestIndex]->getSeriesCode() << std::endl;
 }
-
-
-
-
-

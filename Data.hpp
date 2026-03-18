@@ -1,13 +1,14 @@
 #pragma once
 #include <string>
+#include "TimeSeries.hpp"
 #include "CountryData.hpp"
 #include "TreeNode.hpp"
 
 class Data {
 private:
+    TreeNode* root = nullptr;
     CountryData countries[512];
     int numOfCountries = 0;
-    TreeNode* root = nullptr;
     std::string currSeriesCode;
     TreeNode* recursiveBuild(std::string validCountries[], double minMean, double maxMean, int numOfValid, std::string series_code);
     void recursiveFind(TreeNode* node, double mean, std::string operation, bool& first);
@@ -16,8 +17,6 @@ private:
     bool hasCountry(TreeNode* node, std::string country_name);
     void clearTree(TreeNode* node);
 public:
-    Data();
-    ~Data();
     void load();
     void list(const std::string country_name);
     void country_min(std::string country_code);

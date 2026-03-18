@@ -1,0 +1,11 @@
+CLASS DESIGN
+
+Data acts as the top level manager for the full dataset. Data hence handles operations that involve the whole dataset rather than one country or one tree node. TreeNode represents one node of the interval binary tree. It stores intervals and an array of the country names within that range. Most data members were kept private since external code has no reason to possibly mess up the dataset or tree. Public member functions were reserved for controlled access and analysis. 
+
+ALTERNATIVES AND JUSTIFICATION
+
+While I initially considered inserting countries one by one but the trees are not based on usual BST insertion. This would not work as each node holds an interval, allowing to do things such as trace interval paths. I also initially considered letting data directly access country’s internal time-series. I rejected this as it weakens encapsulation and makes our top level class responsible for out-of-scope details. 
+
+RUNTIME ANALYSIS 
+
+The limits command finds the leftmost or rightmost leaf in the tree by following either the left or right child until a leaf node. Each step performs constant time work. In the base case, the tree is balanced and has height O(log(NUM_NODES)). In the worst case, the tree behaves like a linked list and hence takes O(NUM_NODES) time. 

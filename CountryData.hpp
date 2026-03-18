@@ -2,7 +2,11 @@
 #include <string>
 #include "TimeSeries.hpp"
 
+class Data;
+
 class CountryData {
+    friend class Data;
+
 private:
     int numOfElements;
     int capacity;
@@ -15,6 +19,10 @@ private:
 public:
     CountryData();
     ~CountryData();
+    void clear();
+    void setCountryName(std::string name);
+    void setCountryCode(std::string code);
+    void addSeriesFromRow(std::string row);
     void load(std::string country_name);
     void list();
     void add(std::string series_code, int y, double d);

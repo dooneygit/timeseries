@@ -1,7 +1,7 @@
 #include "TreeNode.hpp"
 
-TreeNode::TreeNode(double left, double right) : 
-    left(left), right(right), numOfCountries(0), capacity(2), left(nullptr), right(nullptr) {
+TreeNode::TreeNode(double leftBound, double rightBound) : 
+    min(leftBound), max(rightBound), left(nullptr), right(nullptr), numOfCountries(0), capacity(2) {
         countries = new std::string[capacity];
     }
 
@@ -16,17 +16,7 @@ void TreeNode::resize(int newCapacity) {
         newArray[i] = countries[i];
     }
 
-    delete countries[];
+    delete[] countries;
     countries = newArray;
     capacity = newCapacity;
 }
-
-void TreeNode::addCountry(std::string countryName) {
-    if(numCountries == capacity) {
-        resize(capacity * 2);
-    }
-
-    countries[numOfCountries] = countryName;
-    numOfCountries++;
-}
-

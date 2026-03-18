@@ -4,3 +4,9 @@ project-2/
 # passcode
 passcode.txt
 
+# executables
+*.exe
+
+# submissions
+*.tar.gz
+*.tar
