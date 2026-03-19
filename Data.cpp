@@ -169,6 +169,9 @@ void Data::range(std::string series_code) {
         }
 
         int seriesIndex = countries[i].findSeriesCode(series_code);
+        if(seriesIndex == -1) {
+            continue;
+        }
 
         double mean = countries[i].series[seriesIndex]->meanValue(); //compute mean of matching series
         
@@ -208,6 +211,9 @@ void Data::build(std::string series_code) {
         }
 
         int seriesIndex = countries[i].findSeriesCode(series_code);
+        if(seriesIndex == -1) {
+            continue;
+        }
 
         double mean = countries[i].series[seriesIndex]->meanValue(); //calculate matching series mean
 
@@ -361,7 +367,9 @@ void Data::recursiveFind(TreeNode* node, double mean, std::string operation, boo
             for(int j{0}; j < 512; j++) {
                 if(state[j] == 1 && countries[j].getCountryName() == node->countries[i]) {
                     int seriesIndex = countries[j].findSeriesCode(currSeriesCode);
-                    currMean = countries[j].series[seriesIndex]->meanValue();
+                    if(seriesIndex != -1) {
+                        currMean = countries[j].series[seriesIndex]->meanValue();
+                    }
                     break;
                 }
             }
