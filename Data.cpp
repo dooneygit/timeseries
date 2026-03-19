@@ -6,6 +6,12 @@
 #include "TimeSeries.hpp"
 #include "CountryData.hpp"
 
+Data::Data() : root(nullptr), currSeriesCode(""), numOfCountries(0) {
+    for(int i = 0; i < 512; i++) {
+        state[i] = 0;
+    }
+}
+
 Data::~Data() {
     clearTree(root);
     root = nullptr;

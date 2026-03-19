@@ -24,6 +24,7 @@ private:
     int search(std::string country_code, bool forInsertion, bool shouldPrint);
     void insertHelper(std::string country_code);
 public:
+    Data();
     ~Data();
     void load();
     void list(const std::string country_name);
