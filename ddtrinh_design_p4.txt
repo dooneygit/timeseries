@@ -1,0 +1,12 @@
+CLASS DESIGN
+
+I extended the existing Data class rather than creating a new class as the new functionality is not a separate abstraction, but our means of storage for the same collection of countries. This also enforces encapsulation, as external code interacts only through our public commands (lookup, insert, remove, clean) and hashing is kept private. Helper functions such as codeToInt, hash, and search, are also private since it is low level logic that helps with the class’s representation. 
+
+ALTERNATIVES AND JUSTIFICATION
+
+I initially considered indicating tombstones in the same CountryData array. However, I felt that mimicking a “deleted” or “empty” CountryData object was very bug prone and unintuitive. I hence used a separate int array instead, where 1, 0, -1, would represent occupied, empty, and previously occupied respectively. For our clean function, I considered reinserting countries first and then sorting. However, the sorted order is supposed to determine the reinsertion order. Reinsertion order directly affects where collisions end up.
+
+RUNTIME ANALYSIS 
+
+Lookup: The command first converts a fixed length country code into an integer key, which is O(1). We then compute the probe sequence using double hashing and check one slot per probe. Assuming that the number of collisions is O(1), the number of probes is also O(1). Each probe performs constant-time work, as it reads the state, compares the code, and computes the next hash position. The total runtime is hence O(1). In the worst case, we have not rehashed and the probe sequence looks at every occupied country. With N countries, this gives worst-case runtime O(N). 
+Clean: First it scans a fixed table size of 512 and copies countries to temporary array, which is O(1) with respect to N. It then sorts the collected country codes with insertion sort. If there are N occupied countries, insertion sort would take O(N^2) in worst case. It then clears the 512-slot table, which is O(1) and reinserts N countries, which is O(N). The total runtime is hence O(N^2).
