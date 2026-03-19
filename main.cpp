@@ -11,7 +11,7 @@ int main() {
             break;
         }
 
-        if(cmd == "LOAD_P3") {
+        else if(cmd == "LOAD_P3" || cmd == "LOAD_P4") {
             data.load();
         }
         else if(cmd == "LIST_P3") {
@@ -54,6 +54,24 @@ int main() {
             std::string country_name;
             std::getline(std::cin >> std::ws, country_name);
             data.trace(country_name);
+        }
+        else if(cmd == "LOOKUP_P4") {
+            std::string country_code;
+            std::cin >> country_code;
+            data.lookup(country_code);
+        }
+        else if(cmd == "INSERT_P4") {
+            std::string country_code;
+            std::cin >> country_code;
+            data.insert(country_code);
+        }
+        else if(cmd == "REMOVE_P4") {
+            std::string country_code;
+            std::cin >> country_code;
+            data.remove(country_code);
+        }
+        else if(cmd == "CLEAN_P4") {
+            data.clean();
         }
     }
 

@@ -27,7 +27,13 @@ int Data::primaryHash(int key) {
 }
 
 int Data::secondaryHash(int key) {
-    return 1 + (key % 511);
+    int step = (key / 512) % 512;
+
+    if(step % 2 == 0) {
+        step++;
+    }
+
+    return step;
 }
 
 int Data::hash(int key, int i) {
@@ -37,50 +43,56 @@ int Data::hash(int key, int i) {
 int Data::search(std::string country_code, bool forInsertion, bool shouldPrint) {
     int key = codeToInt(country_code);
     int firstDeleted = -1;
-    bool reoccupy = false;
-    int i = 0;
 
-
-    for( ; i < 512; i++) {
+    for(int i{0}; i < 512; i++) {
         int index = hash(key, i);
-        reoccupy = forInsertion && firstDeleted != -1;
 
-        if(state[index] == -1 && firstDeleted == -1) {
-            firstDeleted = index;
-        }
-        else if(state[index] == 1) {
+        if(state[index] == 1) {
             if(countries[index].getCountryCode() == country_code) {
                 if(shouldPrint) {
-                    std::cout << "index " << index << "searches " << i + 1 << std::endl;
+                    std::cout << "index " << index << " searches " << i + 1 << std::endl;
                 }
                 return index;
             }
         }
+        else if(state[index] == -1) {
+            if(forInsertion && firstDeleted == -1) {
+                firstDeleted = index;
+            }
+        }
         else if(state[index] == 0) {
-            if(reoccupy) {
-                if(shouldPrint) {
-                    std::cout << "index " << firstDeleted << "searches " << i + 1 << std::endl;
+            if(forInsertion) {
+                if(firstDeleted != -1) {
+                    if(shouldPrint) {
+                        std::cout << "index " << firstDeleted << " searches " << i + 1 << std::endl;
+                    }
+                    return firstDeleted;
                 }
-                return firstDeleted;
+
+                if(shouldPrint) {
+                    std::cout << "index " << index << " searches " << i + 1 << std::endl;
+                }
+                return index;
             }
 
             if(shouldPrint) {
-                std::cout << "index " << index << "searches " << i + 1 << std::endl;
+                std::cout << "failure" << std::endl;
             }
-            return index;
+            return -1;
         }
     }
 
-    if(reoccupy) {
+    if(forInsertion && firstDeleted != -1) {
         if(shouldPrint) {
-            std::cout << "index " << firstDeleted << "searches " << i + 1 << std::endl;
+            std::cout << "index " << firstDeleted << " searches 512" << std::endl;
         }
         return firstDeleted;
     }
-    
+
     if(shouldPrint) {
         std::cout << "failure" << std::endl;
     }
+    
     return -1;
 }
 
