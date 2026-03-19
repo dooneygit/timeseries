@@ -77,8 +77,10 @@ int Data::search(std::string country_code, bool forInsertion, bool shouldPrint) 
         }
         return firstDeleted;
     }
-
-    std::cout << "failure" << std::endl;
+    
+    if(shouldPrint) {
+        std::cout << "failure" << std::endl;
+    }
     return -1;
 }
 
@@ -631,6 +633,45 @@ void Data::insert(std::string country_code) {
     }
 }
 
+void Data::insertHelper(std::string country_code) {
+    int countryIndex = search(country_code, true, false);
+
+    if(countryIndex == -1 || state[countryIndex] == 1) {
+        std::cout << "failure" << std::endl;
+        return;
+    }
+
+    std::ifstream inputFile("lab2_multidata.csv");
+    std::string line;
+    bool found = false;
+    std::string name, code;
+
+    std::getline(inputFile, line); // skip header
+
+    while(std::getline(inputFile, line)) {
+        std::stringstream ss(line);
+        std::string currName, currCode;
+
+        std::getline(ss, currName, ',');
+        std::getline(ss, currCode, ',');
+
+        if(currCode != country_code) {
+            continue;
+        }
+
+        if(!found) {
+            countries[countryIndex].clear();
+            countries[countryIndex].setCountryName(currName);
+            countries[countryIndex].setCountryCode(currCode);
+            state[countryIndex] = 1;
+            numOfCountries++;
+            found = true;
+        }
+
+        countries[countryIndex].addSeriesFromRow(line);
+    }
+}
+
 void Data::clean() {
     CountryData temp[512];
     int count = 0;
@@ -662,7 +703,7 @@ void Data::clean() {
     numOfCountries = 0;
 
     for(int i{0}; i < count; i++) {
-        insert(temp[i].getCountryCode());
+        insertHelper(temp[i].getCountryCode());
     }
 
     std::cout << "success" << std::endl;

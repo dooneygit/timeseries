@@ -21,7 +21,8 @@ private:
     int primaryHash(int key);
     int secondaryHash(int key);
     int hash(int key, int i);
-    int search(std::string code, bool forInsertion, bool shouldPrint);
+    int search(std::string country_code, bool forInsertion, bool shouldPrint);
+    void insertHelper(std::string country_code);
 public:
     ~Data();
     void load();
