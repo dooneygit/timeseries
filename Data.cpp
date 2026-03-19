@@ -92,7 +92,7 @@ int Data::search(std::string country_code, bool forInsertion, bool shouldPrint) 
     if(shouldPrint) {
         std::cout << "failure" << std::endl;
     }
-    
+
     return -1;
 }
 
@@ -685,21 +685,21 @@ void Data::insertHelper(std::string country_code) {
 }
 
 void Data::clean() {
-    CountryData temp[512];
+    std::string temp[512];
     int count = 0;
 
     for(int i{0}; i < 512; i++) {
         if(state[i] == 1) {
-            temp[count] = countries[i];
+            temp[count] = countries[i].getCountryCode();
             count++;
         }
     }
 
     for(int i{1}; i < count; i++) {
-        CountryData key = temp[i];
+        std::string key = temp[i];
         int j = i - 1;
 
-        while(j >= 0 && temp[j].getCountryCode() > key.getCountryCode()) {
+        while(j >= 0 && temp[j] > key) {
             temp[j + 1] = temp[j];
             j--;
         }
@@ -715,7 +715,7 @@ void Data::clean() {
     numOfCountries = 0;
 
     for(int i{0}; i < count; i++) {
-        insertHelper(temp[i].getCountryCode());
+        insertHelper(temp[i]);
     }
 
     std::cout << "success" << std::endl;
