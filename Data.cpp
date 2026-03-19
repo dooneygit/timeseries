@@ -6,8 +6,6 @@
 #include "TimeSeries.hpp"
 #include "CountryData.hpp"
 
-Data::Data() : numOfCountries(0), root(nullptr), currSeriesCode("") {}
-
 Data::~Data() {
     clearTree(root);
     root = nullptr;
@@ -108,7 +106,7 @@ void Data::load() {
         std::getline(ss, name, ',');
         std::getline(ss, code, ',');
 
-        int countryIndex = search(code, true);
+        int countryIndex = search(code, true, false);
 
         if(countryIndex == -1) {
             continue;
@@ -138,7 +136,7 @@ void Data::list(const std::string country_name) {
 }
 
 void Data::country_min(std::string country_code) { //search for the country
-    int countryIndex = search(country_code, false);
+    int countryIndex = search(country_code, false, false);
     if(countryIndex == -1 || state[countryIndex] != 1) {
         std::cout << "failure" << std::endl;
         return;
@@ -587,6 +585,85 @@ void Data::remove(std::string country_code) {
     }
 }
 
-void Data::insert(country_code) {
-    
+void Data::insert(std::string country_code) {
+    int countryIndex = search(country_code, true, false);
+
+    if(countryIndex == -1 || state[countryIndex] == 1) {
+        std::cout << "failure" << std::endl;
+        return;
+    }
+
+    std::ifstream inputFile("lab2_multidata.csv");
+    std::string line;
+    bool found = false;
+    std::string name, code;
+
+    std::getline(inputFile, line); // skip header
+
+    while(std::getline(inputFile, line)) {
+        std::stringstream ss(line);
+        std::string currName, currCode;
+
+        std::getline(ss, currName, ',');
+        std::getline(ss, currCode, ',');
+
+        if(currCode != country_code) {
+            continue;
+        }
+
+        if(!found) {
+            countries[countryIndex].clear();
+            countries[countryIndex].setCountryName(currName);
+            countries[countryIndex].setCountryCode(currCode);
+            state[countryIndex] = 1;
+            numOfCountries++;
+            found = true;
+        }
+
+        countries[countryIndex].addSeriesFromRow(line);
+    }
+
+    if(found) {
+        std::cout << "success" << std::endl;
+    }
+    else {
+        std::cout << "failure" << std::endl;
+    }
+}
+
+void Data::clean() {
+    CountryData temp[512];
+    int count = 0;
+
+    for(int i{0}; i < 512; i++) {
+        if(state[i] == 1) {
+            temp[count] = countries[i];
+            count++;
+        }
+    }
+
+    for(int i{1}; i < count; i++) {
+        CountryData key = temp[i];
+        int j = i - 1;
+
+        while(j >= 0 && temp[j].getCountryCode() > key.getCountryCode()) {
+            temp[j + 1] = temp[j];
+            j--;
+        }
+
+        temp[j + 1] = key;
+    }
+
+    for(int i{0}; i < 512; i++) {
+        countries[i].clear();
+        state[i] = 0;
+    }
+
+    numOfCountries = 0;
+
+    for(int i{0}; i < count; i++) {
+        insert(temp[i].getCountryCode());
+    }
+
+    std::cout << "success" << std::endl;
 }
