@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <vector>
 #include "TimeSeries.hpp"
 #include "CountryData.hpp"
 #include "TreeNode.hpp"
@@ -10,7 +11,7 @@ private:
     CountryData countries[512];
     int numOfCountries = 0;
     std::string currSeriesCode;
-    TreeNode* recursiveBuild(std::string validCountries[], double minMean, double maxMean, int numOfValid, std::string series_code);
+    TreeNode* recursiveBuild(std::vector<std::string>& validCountries, double minMean, double maxMean, std::string series_code);
     void recursiveFind(TreeNode* node, double mean, std::string operation, bool& first);
     bool recursiveDelete(TreeNode* node, std::string country_name);
     void recursiveTrace(TreeNode* node, std::string country_name);

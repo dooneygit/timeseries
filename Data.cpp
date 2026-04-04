@@ -2,6 +2,7 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <vector>
 #include "Data.hpp"
 #include "TimeSeries.hpp"
 #include "CountryData.hpp"
@@ -206,12 +207,11 @@ void Data::build(std::string series_code) {
     root = nullptr;
     currSeriesCode = series_code;
 
-    std::string validCountries[512];
-    int numOfValid = 0;
+    std::vector<std::string> validCountries;
     double minMean = -1.0;
     double maxMean = -1.0;
-    
-    for(int i{0}; i < 512; i++) { 
+
+    for(int i{0}; i < 512; i++) {
         if(state[i] != 1) {
             continue;
         }
@@ -227,8 +227,7 @@ void Data::build(std::string series_code) {
             continue;
         }
 
-        validCountries[numOfValid] = countries[i].getCountryName(); //keep valid country name
-        numOfValid++;
+        validCountries.push_back(countries[i].getCountryName()); //keep valid country name
 
         if(minMean == -1.0) { //first valid sets min and max mean so far
             minMean = mean;
@@ -243,13 +242,14 @@ void Data::build(std::string series_code) {
         }
     }
 
-    if(numOfValid > 0) {
-        root = recursiveBuild(validCountries, minMean, maxMean, numOfValid, series_code);
+    if(validCountries.size() > 0) {
+        root = recursiveBuild(validCountries, minMean, maxMean, series_code);
     }
     std::cout << "success" << std::endl;
 }
 
-TreeNode* Data::recursiveBuild(std::string validCountries[], double minMean, double maxMean, int numOfValid, std::string series_code) {
+TreeNode* Data::recursiveBuild(std::vector<std::string>& validCountries, double minMean, double maxMean, std::string series_code) {
+    int numOfValid = validCountries.size();
     TreeNode* node = new TreeNode(minMean, maxMean);
 
     for(int i{0}; i < numOfValid; i++) {
@@ -301,10 +301,8 @@ TreeNode* Data::recursiveBuild(std::string validCountries[], double minMean, dou
     }
 
     double mid = (minMean + maxMean)/2.0; //split interval
-    std::string leftCountries[512];
-    std::string rightCountries[512];
-    int numOfLeft = 0;
-    int numOfRight = 0;
+    std::vector<std::string> leftCountries;
+    std::vector<std::string> rightCountries;
 
     for(int i{0}; i < numOfValid; i++) { //divide countries based on their mean vs midpoint
         double mean = -1.0;
@@ -320,21 +318,19 @@ TreeNode* Data::recursiveBuild(std::string validCountries[], double minMean, dou
         }
 
         if(mean < mid) { //less than midpoint goes left
-            leftCountries[numOfLeft] = validCountries[i];
-            numOfLeft++;
+            leftCountries.push_back(validCountries[i]);
         }
         else { //more than midpoint goes right
-            rightCountries[numOfRight] = validCountries[i];
-            numOfRight++;
+            rightCountries.push_back(validCountries[i]);
         }
     }
 
-    if(numOfLeft == 0 || numOfRight == 0) {
+    if(leftCountries.empty() || rightCountries.empty()) {
         return node;
     }
 
-    node->left = recursiveBuild(leftCountries, minMean, mid, numOfLeft, series_code);
-    node->right = recursiveBuild(rightCountries, mid, maxMean, numOfRight, series_code);
+    node->left = recursiveBuild(leftCountries, minMean, mid, series_code);
+    node->right = recursiveBuild(rightCountries, mid, maxMean, series_code);
     return node;
 }
 
@@ -579,8 +575,6 @@ void Data::clearTree(TreeNode* node) {
         return;
     }
 
-    clearTree(node->left);
-    clearTree(node->right);
     delete node;
 }
 

@@ -71,7 +71,7 @@ void TimeSeries::load(std::string filename) {
         
         if (index >= 4) { //our data always starts at an index of 4 in the csv files, so we only need to store when index >= 4
             std::stringstream entry(token);
-            double value;
+            double value = -1;
             entry >> value;
 
             if (value != -1) { //if our data is not invalid, we check if we need to resize and then input our data into the array
@@ -110,7 +110,7 @@ void TimeSeries::loadFromRow(std::string row) {
         }
         else if (index >= 4) { //our data always starts at an index of 4 in the csv files, so we only need to store when index >= 4
             std::stringstream entry(token);
-            double value;
+            double value = -1;
             entry >> value;
 
             if(value >= 0) { //if our data is not invalid, we check if we need to resize and then input our data into the array
