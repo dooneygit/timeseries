@@ -878,6 +878,11 @@ void Data::update_edges(const std::string& series_code, double threshold, const 
 
     clearTree(tempTree);
 
+    if(qualifyingNames.size() < 2) {
+        std::cout << "failure" << std::endl;
+        return;
+    }
+
     std::vector<std::string> qualifyingCodes;
     for(const std::string& name : qualifyingNames) {
         auto it = nameToCode.find(name);
@@ -900,7 +905,9 @@ void Data::update_edges(const std::string& series_code, double threshold, const 
             std::string hi = qualifyingCodes[j];
 
             if(lo > hi) {
-                std::swap(lo, hi);
+                std::string temp = lo;
+                lo = hi;
+                hi = temp;
             }
 
             auto key = std::make_pair(lo, hi);
