@@ -18,8 +18,8 @@ public:
     ~TimeSeries();
     TimeSeries(const TimeSeries&) = delete;
     TimeSeries& operator=(const TimeSeries&) = delete;
-    void load(std::string filename);
-    void loadFromRow(std::string row);
+    void load(const std::string& filename);
+    void loadFromRow(const std::string& row);
     void print();
     void add(int y, double d);
     void update(int y, double d);

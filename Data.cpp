@@ -19,7 +19,7 @@ Data::~Data() {
 }
 
 //hashing
-int Data::codeToInt(std::string country_code) {
+int Data::codeToInt(const std::string& country_code) {
     if(country_code.size() < 3) {
         return -1;
     }
@@ -51,7 +51,7 @@ int Data::hash(int key, int i) {
     return (primaryHash(key) + i * secondaryHash(key)) % 512;
 }
 
-int Data::search(std::string country_code, bool forInsertion, bool shouldPrint) {
+int Data::search(const std::string& country_code, bool forInsertion, bool shouldPrint) {
     int key = codeToInt(country_code); //turn country code into integer
 
     if(key < 0) { //invalid country code
@@ -159,7 +159,7 @@ void Data::load() {
     std::cout << "success" << std::endl;
 }
 
-void Data::list(const std::string country_name) { 
+void Data::list(const std::string& country_name) { 
     for(int i{0}; i < 512; i++) { //go through all possible hash table slots
         if(state[i] == 1 && countries[i].getCountryName() == country_name) { //if target country is found, print all series
             countries[i].list();
@@ -168,7 +168,7 @@ void Data::list(const std::string country_name) {
     }
 }
 
-void Data::country_min(std::string country_code) { //search for the country
+void Data::country_min(const std::string& country_code) { //search for the country
     int countryIndex = search(country_code, false, false);
     if(countryIndex == -1 || state[countryIndex] != 1) {
         std::cout << "failure" << std::endl;
@@ -178,7 +178,7 @@ void Data::country_min(std::string country_code) { //search for the country
     countries[countryIndex].smallest(); //print the series code with the smallest mean
 }
 
-void Data::range(std::string series_code) { 
+void Data::range(const std::string& series_code) { 
     double minMean = -1.0; //tracks smallest and largest so far
     double maxMean = -1.0;
 
@@ -214,7 +214,7 @@ void Data::range(std::string series_code) {
     std::cout << minMean << " " << maxMean << std::endl;
 }
 
-void Data::build(std::string series_code) {
+void Data::build(const std::string& series_code) {
     clearTree(root); //clear old tree
     root = nullptr;
     currSeriesCode = series_code;
@@ -260,7 +260,7 @@ void Data::build(std::string series_code) {
     std::cout << "success" << std::endl;
 }
 
-TreeNode* Data::recursiveBuild(std::vector<std::string>& validCountries, double minMean, double maxMean, std::string series_code) {
+TreeNode* Data::recursiveBuild(std::vector<std::string>& validCountries, double minMean, double maxMean, const std::string& series_code) {
     int numOfValid = validCountries.size();
     TreeNode* node = new TreeNode(minMean, maxMean);
 
@@ -346,7 +346,7 @@ TreeNode* Data::recursiveBuild(std::vector<std::string>& validCountries, double 
     return node;
 }
 
-void Data::find(double mean, std::string operation) { 
+void Data::find(double mean, const std::string& operation) { 
     if(root == nullptr) {
         std::cout << "failure" << std::endl;
         return;
@@ -358,7 +358,7 @@ void Data::find(double mean, std::string operation) {
     std::cout << std::endl;
 }
 
-void Data::recursiveFind(TreeNode* node, double mean, std::string operation, bool& first) {
+void Data::recursiveFind(TreeNode* node, double mean, const std::string& operation, bool& first) {
     if(node == nullptr) {
         return;
     }
@@ -427,7 +427,7 @@ void Data::recursiveFind(TreeNode* node, double mean, std::string operation, boo
     recursiveFind(node->right, mean, operation, first);
 }
 
-void Data::deleteCountry(std::string country_name) {
+void Data::deleteCountry(const std::string& country_name) {
     if(root == nullptr) { //if no tree exists
         std::cout << "failure" << std::endl;
         return;
@@ -461,7 +461,7 @@ void Data::deleteCountry(std::string country_name) {
     }
 }
 
-bool Data::recursiveDelete(TreeNode* node, std::string country_name) {
+bool Data::recursiveDelete(TreeNode* node, const std::string& country_name) {
     if(node == nullptr) {
         return false;
     }
@@ -505,7 +505,7 @@ bool Data::recursiveDelete(TreeNode* node, std::string country_name) {
     return true;
 }
 
-void Data::limits(std::string condition) {
+void Data::limits(const std::string& condition) {
     if(root == nullptr) {
         std::cout << "failure" << std::endl; 
         return;
@@ -536,7 +536,7 @@ void Data::limits(std::string condition) {
     std::cout << std::endl;
 }
 
-void Data::trace(std::string country_name) {
+void Data::trace(const std::string& country_name) {
     if(root == nullptr) {
         std::cout << "failure" << std::endl;
         return;
@@ -551,7 +551,7 @@ void Data::trace(std::string country_name) {
     std::cout << std::endl;
 }
 
-void Data::recursiveTrace(TreeNode* node, std::string country_name) {
+void Data::recursiveTrace(TreeNode* node, const std::string& country_name) {
     if(node == nullptr) { 
         return;
     }
@@ -568,7 +568,7 @@ void Data::recursiveTrace(TreeNode* node, std::string country_name) {
     }
 }
 
-bool Data::hasCountry(TreeNode* node, std::string country_name) {
+bool Data::hasCountry(TreeNode* node, const std::string& country_name) {
     if(node == nullptr) {
         return false;
     }
@@ -590,11 +590,11 @@ void Data::clearTree(TreeNode* node) {
     delete node;
 }
 
-void Data::lookup(std::string country_code) {
+void Data::lookup(const std::string& country_code) {
     search(country_code, false, true); //search for country and print results from search()
 }
 
-void Data::remove(std::string country_code) {
+void Data::remove(const std::string& country_code) {
     int countryIndex = search(country_code, false, false); //search for country
 
     if(countryIndex != -1 && state[countryIndex] == 1) {
@@ -621,7 +621,7 @@ void Data::remove(std::string country_code) {
     }
 }
 
-void Data::insert(std::string country_code) {
+void Data::insert(const std::string& country_code) {
     int countryIndex = search(country_code, true, false); //find where country should be inserted
 
     if(countryIndex == -1 || state[countryIndex] == 1) {
@@ -667,7 +667,7 @@ void Data::insert(std::string country_code) {
     }
 }
 
-void Data::insertHelper(std::string country_code) { //insert but with no output
+void Data::insertHelper(const std::string& country_code) { //insert but with no output
     int countryIndex = search(country_code, true, false);
 
     if(countryIndex == -1 || state[countryIndex] == 1) {

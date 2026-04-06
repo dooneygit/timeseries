@@ -57,7 +57,7 @@ TimeSeries::~TimeSeries() { //destructor deallocates our arrays
     delete[] data; 
 }
 
-void TimeSeries::load(std::string filename) {
+void TimeSeries::load(const std::string& filename) {
     //resets our numOfElements and resizes to the initial capacity of 2 in case load is called again
     numOfElements = 0;
     resize(2);
@@ -91,7 +91,7 @@ void TimeSeries::load(std::string filename) {
     std::cout << "success" << std::endl;
 }
 
-void TimeSeries::loadFromRow(std::string row) {
+void TimeSeries::loadFromRow(const std::string& row) {
     //resets our numOfElements and resizes to the initial capacity of 2 in case load is called again
     numOfElements = 0;
     resize(2);
