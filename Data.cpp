@@ -765,7 +765,7 @@ void Data::initialize() {
 
     for(int i{0}; i < 512; i++) {
         if(state[i] == 1) {
-            graphAdj[countries[i].getCountryCode()] = {};
+            graphAdj[countries[i].getCountryCode()] = {}; //each country starts as a disconnected node
         }
     }
 
@@ -795,7 +795,7 @@ TreeNode* Data::buildTempTree(const std::string& series_code, std::unordered_map
         std::string name = countries[i].getCountryName();
         validCountries.push_back(name);
         meanMap[name] = mean;
-        nameToCode[name] = countries[i].getCountryCode();
+        nameToCode[name] = countries[i].getCountryCode(); //need the code later to create edges, the tree only stores names
 
         if(minMean == -1.0) {
             minMean = mean;
@@ -814,7 +814,7 @@ TreeNode* Data::buildTempTree(const std::string& series_code, std::unordered_map
         return nullptr;
     }
 
-    return recursiveBuild(validCountries, minMean, maxMean, meanMap);
+    return recursiveBuild(validCountries, minMean, maxMean, meanMap); //build without overwriting the existing member tree
 }
 
 void Data::collectCountries(TreeNode* node, double threshold, const std::string& relation, const std::unordered_map<std::string, double>& meanMap, std::vector<std::string>& result) {
@@ -822,17 +822,17 @@ void Data::collectCountries(TreeNode* node, double threshold, const std::string&
         return;
     }
 
-    if(relation == "less" && node->min >= threshold) {
+    if(relation == "less" && node->min >= threshold) { //no country in this subtree can have a mean below the threshold
         return;
     }
-    if(relation == "greater" && node->max <= threshold) {
+    if(relation == "greater" && node->max <= threshold) { //no country in this subtree can have a mean above the threshold
         return;
     }
-    if(relation == "equal" && (node->max < threshold - 1e-3 || node->min > threshold + 1e-3)) {
+    if(relation == "equal" && (node->max < threshold - 1e-3 || node->min > threshold + 1e-3)) { //threshold is out of range for anything in this subtree
         return;
     }
 
-    if(node->left == nullptr && node->right == nullptr) {
+    if(node->left == nullptr && node->right == nullptr) { //countries are only stored at leaf nodes
         for(int i{0}; i < node->numOfCountries; i++) {
             auto it = meanMap.find(node->countries[i]);
             if(it == meanMap.end()) {
@@ -842,16 +842,16 @@ void Data::collectCountries(TreeNode* node, double threshold, const std::string&
             double mean = it->second;
 
             if(relation == "less" && mean < threshold) {
-                result.push_back(node->countries[i]);
+                result.push_back(node->countries[i]); //country satisfies the relation
             }
             else if(relation == "greater" && mean > threshold) {
-                result.push_back(node->countries[i]);
+                result.push_back(node->countries[i]); //country satisfies the relation
             }
             else if(relation == "equal") {
                 double diff = mean - threshold;
                 if(diff < 0) diff = -diff;
                 if(diff <= 1e-3) {
-                    result.push_back(node->countries[i]);
+                    result.push_back(node->countries[i]); //country satisfies the relation
                 }
             }
         }
@@ -866,7 +866,7 @@ void Data::update_edges(const std::string& series_code, double threshold, const 
     std::unordered_map<std::string, double> meanMap;
     std::unordered_map<std::string, std::string> nameToCode;
 
-    TreeNode* tempTree = buildTempTree(series_code, meanMap, nameToCode);
+    TreeNode* tempTree = buildTempTree(series_code, meanMap, nameToCode); //build a tree for this series to find countries matching the relation
 
     if(tempTree == nullptr) {
         std::cout << "failure" << std::endl;
@@ -874,9 +874,9 @@ void Data::update_edges(const std::string& series_code, double threshold, const 
     }
 
     std::vector<std::string> qualifyingNames;
-    collectCountries(tempTree, threshold, relation, meanMap, qualifyingNames);
+    collectCountries(tempTree, threshold, relation, meanMap, qualifyingNames); //search the tree for countries that satisfy the relation
 
-    clearTree(tempTree);
+    clearTree(tempTree); //done searching, free the temporary tree
 
     if(qualifyingNames.size() < 2) {
         std::cout << "failure" << std::endl;
@@ -887,7 +887,7 @@ void Data::update_edges(const std::string& series_code, double threshold, const 
     for(const std::string& name : qualifyingNames) {
         auto it = nameToCode.find(name);
         if(it != nameToCode.end()) {
-            qualifyingCodes.push_back(it->second);
+            qualifyingCodes.push_back(it->second); //edges are keyed by country code, not name
         }
     }
 
@@ -904,7 +904,7 @@ void Data::update_edges(const std::string& series_code, double threshold, const 
             std::string lo = qualifyingCodes[i];
             std::string hi = qualifyingCodes[j];
 
-            if(lo > hi) {
+            if(lo > hi) { //always store smaller code first so each pair has one unique key
                 std::string temp = lo;
                 lo = hi;
                 hi = temp;
@@ -916,7 +916,7 @@ void Data::update_edges(const std::string& series_code, double threshold, const 
             if(it == edgeData.end()) { //new edge, add it
                 edgeData[key] = {rel};
                 graphAdj[qualifyingCodes[i]].push_back(qualifyingCodes[j]);
-                graphAdj[qualifyingCodes[j]].push_back(qualifyingCodes[i]);
+                graphAdj[qualifyingCodes[j]].push_back(qualifyingCodes[i]); //undirected, add from both sides
                 anyAdded = true;
             }
             else { //edge exists, check if this relationship is already there
@@ -928,7 +928,7 @@ void Data::update_edges(const std::string& series_code, double threshold, const 
                     }
                 }
 
-                if(!exists) {
+                if(!exists) { //spec says store only unique tuples per edge
                     it->second.push_back(rel);
                     anyAdded = true;
                 }
@@ -947,19 +947,19 @@ void Data::update_edges(const std::string& series_code, double threshold, const 
 void Data::adjacent(const std::string& country_code) {
     auto it = graphAdj.find(country_code);
 
-    if(it == graphAdj.end()) {
+    if(it == graphAdj.end()) { //country is not in the graph
         std::cout << "failure" << std::endl;
         return;
     }
 
-    if(it->second.empty()) {
+    if(it->second.empty()) { //country has no edges yet
         std::cout << "none" << std::endl;
         return;
     }
 
     bool first = true;
     for(const std::string& adjCode : it->second) {
-        int idx = search(adjCode, false, false);
+        int idx = search(adjCode, false, false); //look up country data by code to get the name
         if(idx == -1 || state[idx] != 1) {
             continue;
         }
@@ -967,7 +967,7 @@ void Data::adjacent(const std::string& country_code) {
         if(!first) {
             std::cout << " ";
         }
-        std::cout << countries[idx].getCountryName();
+        std::cout << countries[idx].getCountryName(); //output name not code
         first = false;
     }
 
@@ -975,7 +975,7 @@ void Data::adjacent(const std::string& country_code) {
 }
 
 void Data::path(const std::string& code1, const std::string& code2) {
-    if(code1 == code2) {
+    if(code1 == code2) { //same country is trivially connected
         std::cout << "true" << std::endl;
         return;
     }
@@ -996,12 +996,12 @@ void Data::path(const std::string& code1, const std::string& code2) {
         }
 
         for(const std::string& neighbor : it->second) {
-            if(neighbor == code2) {
+            if(neighbor == code2) { //found a path to the destination
                 std::cout << "true" << std::endl;
                 return;
             }
 
-            if(visited.find(neighbor) == visited.end()) {
+            if(visited.find(neighbor) == visited.end()) { //only enqueue countries not yet visited
                 visited.insert(neighbor);
                 bfsQueue.push(neighbor);
             }
@@ -1015,13 +1015,13 @@ void Data::relationships(const std::string& code1, const std::string& code2) {
     std::string lo = code1;
     std::string hi = code2;
 
-    if(lo > hi) {
+    if(lo > hi) { //match the key order used when the edge was stored
         std::swap(lo, hi);
     }
 
     auto it = edgeData.find(std::make_pair(lo, hi));
 
-    if(it == edgeData.end() || it->second.empty()) {
+    if(it == edgeData.end() || it->second.empty()) { //no edge between these two countries
         std::cout << "none" << std::endl;
         return;
     }
@@ -1031,7 +1031,7 @@ void Data::relationships(const std::string& code1, const std::string& code2) {
         if(!first) {
             std::cout << " ";
         }
-        std::cout << "(" << r.seriesCode << " " << r.threshold << " " << r.relation << ")";
+        std::cout << "(" << r.seriesCode << " " << r.threshold << " " << r.relation << ")"; //format each tuple
         first = false;
     }
 
