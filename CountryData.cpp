@@ -21,7 +21,7 @@ void CountryData::resize(int newCapacity) {
     capacity = newCapacity;
 }
 
-int CountryData::findSeriesCode(std::string series_code) {
+int CountryData::findSeriesCode(const std::string& series_code) {
     for(int i{0}; i < numOfElements; i++) {
         if(series[i]->getSeriesCode() == series_code) {
             return i;
@@ -52,15 +52,15 @@ void CountryData::clear() {
     countryCode = "";
 }
 
-void CountryData::setCountryName(std::string name) {
+void CountryData::setCountryName(const std::string& name) {
     countryName = name;
 }
 
-void CountryData::setCountryCode(std::string code) {
+void CountryData::setCountryCode(const std::string& code) {
     countryCode = code;
 }
 
-void CountryData::addSeriesFromRow(std::string row) {
+void CountryData::addSeriesFromRow(const std::string& row) {
     if(numOfElements == capacity) {
         resize(capacity * 2);
     }
@@ -70,7 +70,7 @@ void CountryData::addSeriesFromRow(std::string row) {
     numOfElements++;
 }
 
-void CountryData::load(std::string country_name) {
+void CountryData::load(const std::string& country_name) {
     for(int i{0}; i < numOfElements; i++) {
         delete series[i];
     }
@@ -123,7 +123,7 @@ void CountryData::list() {
     std::cout << std::endl;
 }
 
-void CountryData::add(std::string series_code, int y, double d) {
+void CountryData::add(const std::string& series_code, int y, double d) {
     int seriesIndex = findSeriesCode(series_code);
 
     if(seriesIndex != -1) {
@@ -134,7 +134,7 @@ void CountryData::add(std::string series_code, int y, double d) {
     std::cout << "failure" << std::endl;
 }
 
-void CountryData::update(std::string series_code, int y, double d) {
+void CountryData::update(const std::string& series_code, int y, double d) {
     int seriesIndex = findSeriesCode(series_code);
 
     if(seriesIndex != -1) {
@@ -145,7 +145,7 @@ void CountryData::update(std::string series_code, int y, double d) {
     std::cout << "failure" << std::endl;
 }
 
-void CountryData::print(std::string series_code) {
+void CountryData::print(const std::string& series_code) {
     int seriesIndex = findSeriesCode(series_code);
 
     if(seriesIndex != -1) {
@@ -156,7 +156,7 @@ void CountryData::print(std::string series_code) {
     std::cout << "failure" << std::endl;
 }
 
-void CountryData::deleteSeries(std::string series_code) {
+void CountryData::deleteSeries(const std::string& series_code) {
     int seriesIndex = findSeriesCode(series_code);
 
     if(seriesIndex != -1) {
@@ -201,7 +201,7 @@ void CountryData::biggest() {
     std::cout << series[biggestIndex]->getSeriesCode() << std::endl;
 }
 
-void CountryData::ts(std::string series_code) {
+void CountryData::ts(const std::string& series_code) {
     int seriesIndex = findSeriesCode(series_code);
 
     if(seriesIndex != -1) {
