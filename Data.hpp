@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <unordered_map>
 #include "TimeSeries.hpp"
 #include "CountryData.hpp"
 #include "TreeNode.hpp"
@@ -11,8 +12,8 @@ private:
     CountryData countries[512];
     int numOfCountries = 0;
     std::string currSeriesCode;
-    TreeNode* recursiveBuild(std::vector<std::string>& validCountries, double minMean, double maxMean, const std::string& series_code);
-    void recursiveFind(TreeNode* node, double mean, const std::string& operation, bool& first);
+    TreeNode* recursiveBuild(std::vector<std::string>& validCountries, double minMean, double maxMean, const std::unordered_map<std::string, double>& meanMap);
+    void recursiveFind(TreeNode* node, double mean, const std::string& operation, bool& first, const std::unordered_map<std::string, double>& meanMap);
     bool recursiveDelete(TreeNode* node, const std::string& country_name);
     void recursiveTrace(TreeNode* node, const std::string& country_name);
     bool hasCountry(TreeNode* node, const std::string& country_name);
@@ -23,7 +24,7 @@ private:
     int secondaryHash(int key);
     int hash(int key, int i);
     int search(const std::string& country_code, bool forInsertion, bool shouldPrint);
-    void insertHelper(const std::string& country_code);
+    void insertHelper(const std::string& country_code, const std::vector<std::string>& lines);
 public:
     Data();
     ~Data();

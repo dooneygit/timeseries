@@ -215,11 +215,12 @@ void Data::range(const std::string& series_code) {
 }
 
 void Data::build(const std::string& series_code) {
-    clearTree(root); //clear old tree
+    clearTree(root);
     root = nullptr;
     currSeriesCode = series_code;
 
     std::vector<std::string> validCountries;
+    std::unordered_map<std::string, double> meanMap;
     double minMean = -1.0;
     double maxMean = -1.0;
 
@@ -233,47 +234,49 @@ void Data::build(const std::string& series_code) {
             continue;
         }
 
-        double mean = countries[i].series[seriesIndex]->meanValue(); //calculate matching series mean
+        double mean = countries[i].series[seriesIndex]->meanValue();
 
-        if(mean <= 0) { //ignore invalid
+        if(mean <= 0) {
             continue;
         }
 
-        validCountries.push_back(countries[i].getCountryName()); //keep valid country name
+        std::string name = countries[i].getCountryName();
+        validCountries.push_back(name);
+        meanMap[name] = mean;
 
-        if(minMean == -1.0) { //first valid sets min and max mean so far
+        if(minMean == -1.0) {
             minMean = mean;
             maxMean = mean;
         }
 
-        if(minMean > mean) { //update min
+        if(minMean > mean) {
             minMean = mean;
         }
-        else if(maxMean < mean) { //update max
+        else if(maxMean < mean) {
             maxMean = mean;
         }
     }
 
     if(validCountries.size() > 0) {
-        root = recursiveBuild(validCountries, minMean, maxMean, series_code);
+        root = recursiveBuild(validCountries, minMean, maxMean, meanMap);
     }
     std::cout << "success" << std::endl;
 }
 
-TreeNode* Data::recursiveBuild(std::vector<std::string>& validCountries, double minMean, double maxMean, const std::string& series_code) {
+TreeNode* Data::recursiveBuild(std::vector<std::string>& validCountries, double minMean, double maxMean, const std::unordered_map<std::string, double>& meanMap) {
     int numOfValid = validCountries.size();
     TreeNode* node = new TreeNode(minMean, maxMean);
 
     for(int i{0}; i < numOfValid; i++) {
-        if(node->numOfCountries == node->capacity) { //expand dynamic array if full
+        if(node->numOfCountries == node->capacity) {
             node->resize(node->capacity * 2);
         }
 
-        node->countries[node->numOfCountries] = validCountries[i]; //copy next country name
+        node->countries[node->numOfCountries] = validCountries[i];
         node->numOfCountries++;
     }
 
-    if(numOfValid == 1) { //if only one country, its a leaf
+    if(numOfValid == 1) {
         return node;
     }
 
@@ -281,27 +284,17 @@ TreeNode* Data::recursiveBuild(std::vector<std::string>& validCountries, double 
     bool close = true;
 
     for(int i{0}; i < numOfValid; i++) {
-        double mean = -1.0;
-
-        for(int j{0}; j < 512; j++) { //find countrys mean from the main array
-            if(state[j] == 1 && countries[j].getCountryName() == validCountries[i]) {
-                int seriesIndex = countries[j].findSeriesCode(series_code);
-                if(seriesIndex != -1) {
-                    mean = countries[j].series[seriesIndex]->meanValue();
-                }
-                break;
-            }
-        }
+        double mean = meanMap.at(validCountries[i]);
 
         if(i == 0) {
             firstMean = mean;
         }
         else {
-            double diff = mean - firstMean; //compute absolute difference
+            double diff = mean - firstMean;
             if(diff < 0) {
                 diff = -diff;
             }
-            if(diff > 1e-3) { //if differs too much, node is not counted as a leaf
+            if(diff > 1e-3) {
                 close = false;
                 break;
             }
@@ -312,27 +305,17 @@ TreeNode* Data::recursiveBuild(std::vector<std::string>& validCountries, double 
         return node;
     }
 
-    double mid = (minMean + maxMean)/2.0; //split interval
+    double mid = (minMean + maxMean)/2.0;
     std::vector<std::string> leftCountries;
     std::vector<std::string> rightCountries;
 
-    for(int i{0}; i < numOfValid; i++) { //divide countries based on their mean vs midpoint
-        double mean = -1.0;
+    for(int i{0}; i < numOfValid; i++) {
+        double mean = meanMap.at(validCountries[i]);
 
-        for(int j{0}; j < 512; j++) {
-            if(state[j] == 1 && countries[j].getCountryName() == validCountries[i]) {
-                int seriesIndex = countries[j].findSeriesCode(series_code);
-                if(seriesIndex != -1) {
-                    mean = countries[j].series[seriesIndex]->meanValue();
-                }
-                break;
-            }
-        }
-
-        if(mean < mid) { //less than midpoint goes left
+        if(mean < mid) {
             leftCountries.push_back(validCountries[i]);
         }
-        else { //more than midpoint goes right
+        else {
             rightCountries.push_back(validCountries[i]);
         }
     }
@@ -341,29 +324,47 @@ TreeNode* Data::recursiveBuild(std::vector<std::string>& validCountries, double 
         return node;
     }
 
-    node->left = recursiveBuild(leftCountries, minMean, mid, series_code);
-    node->right = recursiveBuild(rightCountries, mid, maxMean, series_code);
+    node->left = recursiveBuild(leftCountries, minMean, mid, meanMap);
+    node->right = recursiveBuild(rightCountries, mid, maxMean, meanMap);
     return node;
 }
 
-void Data::find(double mean, const std::string& operation) { 
+void Data::find(double mean, const std::string& operation) {
     if(root == nullptr) {
         std::cout << "failure" << std::endl;
         return;
     }
 
+    std::unordered_map<std::string, double> meanMap;
+
+    for(int i{0}; i < 512; i++) {
+        if(state[i] != 1) {
+            continue;
+        }
+
+        int seriesIndex = countries[i].findSeriesCode(currSeriesCode);
+        if(seriesIndex == -1) {
+            continue;
+        }
+
+        double m = countries[i].series[seriesIndex]->meanValue();
+
+        if(m > 0) {
+            meanMap[countries[i].getCountryName()] = m;
+        }
+    }
+
     bool first = true;
 
-    recursiveFind(root, mean, operation, first);
+    recursiveFind(root, mean, operation, first, meanMap);
     std::cout << std::endl;
 }
 
-void Data::recursiveFind(TreeNode* node, double mean, const std::string& operation, bool& first) {
+void Data::recursiveFind(TreeNode* node, double mean, const std::string& operation, bool& first, const std::unordered_map<std::string, double>& meanMap) {
     if(node == nullptr) {
         return;
     }
 
-    //if whole interval is invalid based on operation, skip
     if(operation == "less" && node->min >= mean) {
         return;
     }
@@ -376,21 +377,15 @@ void Data::recursiveFind(TreeNode* node, double mean, const std::string& operati
         return;
     }
 
-    if(node->left == nullptr && node->right == nullptr) { //if this is a leaf, check the country means in it
+    if(node->left == nullptr && node->right == nullptr) {
         for(int i{0}; i < node->numOfCountries; i++) {
-            double currMean = -1.0; //mean of leaf country
-
-            for(int j{0}; j < 512; j++) {
-                if(state[j] == 1 && countries[j].getCountryName() == node->countries[i]) {
-                    int seriesIndex = countries[j].findSeriesCode(currSeriesCode);
-                    if(seriesIndex != -1) {
-                        currMean = countries[j].series[seriesIndex]->meanValue();
-                    }
-                    break;
-                }
+            auto it = meanMap.find(node->countries[i]);
+            if(it == meanMap.end()) {
+                continue;
             }
 
-            //print if satisfies
+            double currMean = it->second;
+
             if(operation == "less" && currMean < mean) {
                 if(!first) {
                     std::cout << " ";
@@ -423,8 +418,8 @@ void Data::recursiveFind(TreeNode* node, double mean, const std::string& operati
         return;
     }
 
-    recursiveFind(node->left, mean, operation, first);
-    recursiveFind(node->right, mean, operation, first);
+    recursiveFind(node->left, mean, operation, first, meanMap);
+    recursiveFind(node->right, mean, operation, first, meanMap);
 }
 
 void Data::deleteCountry(const std::string& country_name) {
@@ -674,7 +669,7 @@ void Data::insert(const std::string& country_code) {
     }
 }
 
-void Data::insertHelper(const std::string& country_code) { //insert but with no output
+void Data::insertHelper(const std::string& country_code, const std::vector<std::string>& lines) {
     int countryIndex = search(country_code, true, false);
 
     if(countryIndex == -1 || state[countryIndex] == 1) {
@@ -682,15 +677,11 @@ void Data::insertHelper(const std::string& country_code) { //insert but with no 
         return;
     }
 
-    std::ifstream inputFile("lab2_multidata.csv");
-    std::string line;
     bool found = false;
-    std::string name, code;
+    int numLines = (int)lines.size();
 
-    std::getline(inputFile, line); // skip header
-
-    while(std::getline(inputFile, line)) {
-        std::stringstream ss(line);
+    for(int i{0}; i < numLines; i++) {
+        std::stringstream ss(lines[i]);
         std::string currName, currCode;
 
         std::getline(ss, currName, ',');
@@ -709,7 +700,7 @@ void Data::insertHelper(const std::string& country_code) { //insert but with no 
             found = true;
         }
 
-        countries[countryIndex].addSeriesFromRow(line);
+        countries[countryIndex].addSeriesFromRow(lines[i]);
     }
 }
 
@@ -737,8 +728,8 @@ void Data::clean() {
     }
 
     for(int i{0}; i < 512; i++) {
-        countries[i].clear(); //clear old entries
-        state[i] = 0; //every slot is empty
+        countries[i].clear();
+        state[i] = 0;
     }
 
     numOfCountries = 0;
@@ -749,8 +740,18 @@ void Data::clean() {
         currSeriesCode = "";
     }
 
+    std::ifstream inputFile("lab2_multidata.csv");
+    std::vector<std::string> lines;
+    std::string line;
+
+    std::getline(inputFile, line);
+
+    while(std::getline(inputFile, line)) {
+        lines.push_back(line);
+    }
+
     for(int i{0}; i < count; i++) {
-        insertHelper(temp[i]); //insert in sorted order
+        insertHelper(temp[i], lines);
     }
 
     std::cout << "success" << std::endl;
