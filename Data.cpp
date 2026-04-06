@@ -662,6 +662,11 @@ void Data::insert(const std::string& country_code) {
     }
 
     if(found) {
+        if(root != nullptr) {
+            clearTree(root);
+            root = nullptr;
+            currSeriesCode = "";
+        }
         std::cout << "success" << std::endl;
     }
     else {
@@ -737,6 +742,12 @@ void Data::clean() {
     }
 
     numOfCountries = 0;
+
+    if(root != nullptr) {
+        clearTree(root);
+        root = nullptr;
+        currSeriesCode = "";
+    }
 
     for(int i{0}; i < count; i++) {
         insertHelper(temp[i]); //insert in sorted order
