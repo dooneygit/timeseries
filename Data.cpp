@@ -587,6 +587,8 @@ void Data::clearTree(TreeNode* node) {
         return;
     }
 
+    clearTree(node->left);
+    clearTree(node->right);
     delete node;
 }
 

@@ -6,8 +6,6 @@ TreeNode::TreeNode(double leftBound, double rightBound) :
     }
 
 TreeNode::~TreeNode() {
-    delete left;
-    delete right;
     delete[] countries;
 }
 
