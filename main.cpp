@@ -73,6 +73,30 @@ int main() {
         else if(cmd == "CLEAN_P4") {
             data.clean();
         }
+        else if(cmd == "INITIALIZE_P5") {
+            data.initialize();
+        }
+        else if(cmd == "UPDATE_EDGES_P5") {
+            std::string series_code, relation;
+            double threshold;
+            std::cin >> series_code >> threshold >> relation;
+            data.update_edges(series_code, threshold, relation);
+        }
+        else if(cmd == "ADJACENT_P5") {
+            std::string country_code;
+            std::cin >> country_code;
+            data.adjacent(country_code);
+        }
+        else if(cmd == "PATH_P5") {
+            std::string code1, code2;
+            std::cin >> code1 >> code2;
+            data.path(code1, code2);
+        }
+        else if(cmd == "RELATIONSHIPS_P5") {
+            std::string code1, code2;
+            std::cin >> code1 >> code2;
+            data.relationships(code1, code2);
+        }
     }
 
     return 0;

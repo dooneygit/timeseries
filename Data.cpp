@@ -3,6 +3,8 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <queue>
+#include <unordered_set>
 #include "Data.hpp"
 #include "TimeSeries.hpp"
 #include "CountryData.hpp"
@@ -705,7 +707,7 @@ void Data::insertHelper(const std::string& country_code, const std::vector<std::
 }
 
 void Data::clean() {
-    std::string temp[512]; 
+    std::string temp[512];
     int count = 0;
 
     for(int i{0}; i < 512; i++) {
@@ -724,7 +726,7 @@ void Data::clean() {
             j--;
         }
 
-        temp[j + 1] = key; 
+        temp[j + 1] = key;
     }
 
     for(int i{0}; i < 512; i++) {
@@ -755,4 +757,276 @@ void Data::clean() {
     }
 
     std::cout << "success" << std::endl;
+}
+
+void Data::initialize() {
+    edgeData.clear();
+    graphAdj.clear();
+
+    for(int i{0}; i < 512; i++) {
+        if(state[i] == 1) {
+            graphAdj[countries[i].getCountryCode()] = {};
+        }
+    }
+
+    std::cout << "success" << std::endl;
+}
+
+TreeNode* Data::buildTempTree(const std::string& series_code, std::unordered_map<std::string, double>& meanMap, std::unordered_map<std::string, std::string>& nameToCode) {
+    std::vector<std::string> validCountries;
+    double minMean = -1.0;
+    double maxMean = -1.0;
+
+    for(int i{0}; i < 512; i++) {
+        if(state[i] != 1) {
+            continue;
+        }
+
+        int seriesIndex = countries[i].findSeriesCode(series_code);
+        if(seriesIndex == -1) {
+            continue;
+        }
+
+        double mean = countries[i].series[seriesIndex]->meanValue();
+        if(mean <= 0) {
+            continue;
+        }
+
+        std::string name = countries[i].getCountryName();
+        validCountries.push_back(name);
+        meanMap[name] = mean;
+        nameToCode[name] = countries[i].getCountryCode();
+
+        if(minMean == -1.0) {
+            minMean = mean;
+            maxMean = mean;
+        }
+
+        if(mean < minMean) {
+            minMean = mean;
+        }
+        else if(mean > maxMean) {
+            maxMean = mean;
+        }
+    }
+
+    if(validCountries.empty()) {
+        return nullptr;
+    }
+
+    return recursiveBuild(validCountries, minMean, maxMean, meanMap);
+}
+
+void Data::collectCountries(TreeNode* node, double threshold, const std::string& relation, const std::unordered_map<std::string, double>& meanMap, std::vector<std::string>& result) {
+    if(node == nullptr) {
+        return;
+    }
+
+    if(relation == "less" && node->min >= threshold) {
+        return;
+    }
+    if(relation == "greater" && node->max <= threshold) {
+        return;
+    }
+    if(relation == "equal" && (node->max < threshold - 1e-3 || node->min > threshold + 1e-3)) {
+        return;
+    }
+
+    if(node->left == nullptr && node->right == nullptr) {
+        for(int i{0}; i < node->numOfCountries; i++) {
+            auto it = meanMap.find(node->countries[i]);
+            if(it == meanMap.end()) {
+                continue;
+            }
+
+            double mean = it->second;
+
+            if(relation == "less" && mean < threshold) {
+                result.push_back(node->countries[i]);
+            }
+            else if(relation == "greater" && mean > threshold) {
+                result.push_back(node->countries[i]);
+            }
+            else if(relation == "equal") {
+                double diff = mean - threshold;
+                if(diff < 0) diff = -diff;
+                if(diff <= 1e-3) {
+                    result.push_back(node->countries[i]);
+                }
+            }
+        }
+        return;
+    }
+
+    collectCountries(node->left, threshold, relation, meanMap, result);
+    collectCountries(node->right, threshold, relation, meanMap, result);
+}
+
+void Data::update_edges(const std::string& series_code, double threshold, const std::string& relation) {
+    std::unordered_map<std::string, double> meanMap;
+    std::unordered_map<std::string, std::string> nameToCode;
+
+    TreeNode* tempTree = buildTempTree(series_code, meanMap, nameToCode);
+
+    if(tempTree == nullptr) {
+        std::cout << "failure" << std::endl;
+        return;
+    }
+
+    std::vector<std::string> qualifyingNames;
+    collectCountries(tempTree, threshold, relation, meanMap, qualifyingNames);
+
+    clearTree(tempTree);
+
+    std::vector<std::string> qualifyingCodes;
+    for(const std::string& name : qualifyingNames) {
+        auto it = nameToCode.find(name);
+        if(it != nameToCode.end()) {
+            qualifyingCodes.push_back(it->second);
+        }
+    }
+
+    if(qualifyingCodes.size() < 2) {
+        std::cout << "failure" << std::endl;
+        return;
+    }
+
+    Relationship rel{series_code, threshold, relation};
+    bool anyAdded = false;
+
+    for(int i{0}; i < (int)qualifyingCodes.size(); i++) {
+        for(int j = i + 1; j < (int)qualifyingCodes.size(); j++) {
+            std::string lo = qualifyingCodes[i];
+            std::string hi = qualifyingCodes[j];
+
+            if(lo > hi) {
+                std::swap(lo, hi);
+            }
+
+            auto key = std::make_pair(lo, hi);
+            auto it = edgeData.find(key);
+
+            if(it == edgeData.end()) { //new edge, add it
+                edgeData[key] = {rel};
+                graphAdj[qualifyingCodes[i]].push_back(qualifyingCodes[j]);
+                graphAdj[qualifyingCodes[j]].push_back(qualifyingCodes[i]);
+                anyAdded = true;
+            }
+            else { //edge exists, check if this relationship is already there
+                bool exists = false;
+                for(const Relationship& r : it->second) {
+                    if(r == rel) {
+                        exists = true;
+                        break;
+                    }
+                }
+
+                if(!exists) {
+                    it->second.push_back(rel);
+                    anyAdded = true;
+                }
+            }
+        }
+    }
+
+    if(anyAdded) {
+        std::cout << "success" << std::endl;
+    }
+    else {
+        std::cout << "failure" << std::endl;
+    }
+}
+
+void Data::adjacent(const std::string& country_code) {
+    auto it = graphAdj.find(country_code);
+
+    if(it == graphAdj.end()) {
+        std::cout << "failure" << std::endl;
+        return;
+    }
+
+    if(it->second.empty()) {
+        std::cout << "none" << std::endl;
+        return;
+    }
+
+    bool first = true;
+    for(const std::string& adjCode : it->second) {
+        int idx = search(adjCode, false, false);
+        if(idx == -1 || state[idx] != 1) {
+            continue;
+        }
+
+        if(!first) {
+            std::cout << " ";
+        }
+        std::cout << countries[idx].getCountryName();
+        first = false;
+    }
+
+    std::cout << std::endl;
+}
+
+void Data::path(const std::string& code1, const std::string& code2) {
+    if(code1 == code2) {
+        std::cout << "true" << std::endl;
+        return;
+    }
+
+    std::unordered_set<std::string> visited;
+    std::queue<std::string> bfsQueue;
+
+    bfsQueue.push(code1);
+    visited.insert(code1);
+
+    while(!bfsQueue.empty()) {
+        std::string curr = bfsQueue.front();
+        bfsQueue.pop();
+
+        auto it = graphAdj.find(curr);
+        if(it == graphAdj.end()) {
+            continue;
+        }
+
+        for(const std::string& neighbor : it->second) {
+            if(neighbor == code2) {
+                std::cout << "true" << std::endl;
+                return;
+            }
+
+            if(visited.find(neighbor) == visited.end()) {
+                visited.insert(neighbor);
+                bfsQueue.push(neighbor);
+            }
+        }
+    }
+
+    std::cout << "false" << std::endl;
+}
+
+void Data::relationships(const std::string& code1, const std::string& code2) {
+    std::string lo = code1;
+    std::string hi = code2;
+
+    if(lo > hi) {
+        std::swap(lo, hi);
+    }
+
+    auto it = edgeData.find(std::make_pair(lo, hi));
+
+    if(it == edgeData.end() || it->second.empty()) {
+        std::cout << "none" << std::endl;
+        return;
+    }
+
+    bool first = true;
+    for(const Relationship& r : it->second) {
+        if(!first) {
+            std::cout << " ";
+        }
+        std::cout << "(" << r.seriesCode << " " << r.threshold << " " << r.relation << ")";
+        first = false;
+    }
+
+    std::cout << std::endl;
 }
