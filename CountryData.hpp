@@ -19,6 +19,8 @@ private:
 public:
     CountryData();
     ~CountryData();
+    CountryData(const CountryData&) = delete;
+    CountryData& operator=(const CountryData&) = delete;
     void clear();
     void setCountryName(std::string name);
     void setCountryCode(std::string code);

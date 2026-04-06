@@ -20,6 +20,10 @@ Data::~Data() {
 
 //hashing
 int Data::codeToInt(std::string country_code) {
+    if(country_code.size() < 3) {
+        return -1;
+    }
+
     int result = 0;
 
     for(int i{0}; i < 3; i++) {
@@ -49,6 +53,14 @@ int Data::hash(int key, int i) {
 
 int Data::search(std::string country_code, bool forInsertion, bool shouldPrint) {
     int key = codeToInt(country_code); //turn country code into integer
+
+    if(key < 0) { //invalid country code
+        if(shouldPrint) {
+            std::cout << "failure" << std::endl;
+        }
+        return -1;
+    }
+
     int firstDeleted = -1;
 
     for(int i{0}; i < 512; i++) {

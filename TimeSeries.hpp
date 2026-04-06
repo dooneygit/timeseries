@@ -16,6 +16,8 @@ private:
 public:
     TimeSeries();
     ~TimeSeries();
+    TimeSeries(const TimeSeries&) = delete;
+    TimeSeries& operator=(const TimeSeries&) = delete;
     void load(std::string filename);
     void loadFromRow(std::string row);
     void print();
